@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using DotNetEnv;
+using System.Net.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +15,44 @@ string dbConnectionString = $"Server={Environment.GetEnvironmentVariable("DB_SER
 
 
 builder.Services.AddSingleton<MySqlConnection>(_ => new MySqlConnection(dbConnectionString));
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFactory httpClientFactory) => 
+{
+    var apiKey = Environment.GetEnvironmentVariable("API_ACCESS_KEY");
+
+    if (string.IsNullOrEmpty(apiKey)) {
+        return Results.Problem("API access key is not set.");
+    }
+
+    var client = httpClientFactory.CreateClient();
+    var url = "http://api.aviationstack.com/v1/flights";
+
+    var query = new Dictionary<string, string>
+    {
+        { "access_key", apiKey },
+        { "dep_iata", from.Trim().ToUpper() },
+        { "arr_iata", to.Trim().ToUpper() }
+    };
+
+    try {
+        var response = await client.GetAsync($"{url}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+
+        if (!response.IsSuccessStatusCode) {
+            var error = await response.Content.ReadAsStringAsync();
+            return Results.Problem($"Error fetching flights: {error}");
+        }
+
+        var result = await response.Content.ReadFromJsonAsync<object>();
+        return Results.Ok(result);
+    }
+    catch (Exception ex) {
+        return Results.Problem($"Error fetching flights: {ex.Message}");
+    }
+
+});
 
 app.MapGet("/test-db", async (MySqlConnection dbConnection) =>
 {
