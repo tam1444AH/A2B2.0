@@ -1,6 +1,7 @@
 using MySql.Data.MySqlClient;
 using DotNetEnv;
 using System.Net.Http.Json;
+using a2bapi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,8 +46,16 @@ app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFac
             return Results.Problem($"Error fetching flights: {error}");
         }
 
-        var result = await response.Content.ReadFromJsonAsync<object>();
-        return Results.Ok(result);
+        // var result = await response.Content.ReadFromJsonAsync<object>();
+        // return Results.Ok(result);
+
+        var responseJson = await response.Content.ReadFromJsonAsync<FlightsResponse>();
+
+        if (responseJson?.Data == null || responseJson.Data.Count == 0) {
+            return Results.Ok(new { Message = "No flights found for the specified route."});
+        }
+
+        return Results.Ok(responseJson.Data);
     }
     catch (Exception ex) {
         return Results.Problem($"Error fetching flights: {ex.Message}");
