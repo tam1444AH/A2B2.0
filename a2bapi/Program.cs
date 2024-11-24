@@ -46,9 +46,6 @@ app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFac
             return Results.Problem($"Error fetching flights: {error}");
         }
 
-        // var result = await response.Content.ReadFromJsonAsync<object>();
-        // return Results.Ok(result);
-
         var responseJson = await response.Content.ReadFromJsonAsync<FlightsResponse>();
 
         if (responseJson?.Data == null || responseJson.Data.Count == 0) {
