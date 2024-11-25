@@ -2,6 +2,7 @@ using MySql.Data.MySqlClient;
 using DotNetEnv;
 using System.Net.Http.Json;
 using a2bapi.Models;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +18,32 @@ string dbConnectionString = $"Server={Environment.GetEnvironmentVariable("DB_SER
 
 builder.Services.AddSingleton<MySqlConnection>(_ => new MySqlConnection(dbConnectionString));
 builder.Services.AddHttpClient();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+
+var corsPolicyName = "AllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicyName, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+    
+});
 
 var app = builder.Build();
+
+app.UseCors(corsPolicyName);
+app.UseExceptionHandler("/error");
+app.Map("/error", (HttpContext context) =>
+{
+    var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+    return Results.Problem(exception?.Message ?? "An unknown error occured");
+});
 
 app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFactory httpClientFactory) => 
 {
