@@ -6,7 +6,7 @@ import flights from '../data/flights';
 const FlightsBox = () => {
   return (
     <div className='container-lg d-flex flex-column bg-dark text-center rounded align-items-center justify-content-center p-2 mb-4 mx-auto' style={{ height: '50vh'}}>
-      <div className='overflow-auto w-100'>
+      <div className='row overflow-auto w-100'>
         {flights.flights.length > 0 ? flights.flights.map((flight, index) => (
           <FlightCard flight={flight} key={index}/>
         )) : (

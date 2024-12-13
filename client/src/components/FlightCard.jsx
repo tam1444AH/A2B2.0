@@ -1,30 +1,30 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 import { IoAirplaneSharp } from 'react-icons/io5';
-import flights from '../data/flights';
+
 
 const FlightCard = ({ flight }) => {
   return (
-    <div className="col-md-3 mb-4">
+    <div className="col-lg-4 mb-4">
       <Card className="shadow-sm h-100">
         <Card.Body className="d-flex flex-column justify-content-between">
           
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="mb-0">{new Date(flight.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</h5>
-            <IoAirplaneSharp className="text-danger fs-4" />
-            <h5 className="mb-0">{new Date(flight.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</h5>
+            <h5 className="mb-0 fs-5">{new Date(flight.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</h5>
+            <IoAirplaneSharp className="text-danger fs-2" />
+            <h5 className="mb-0 fs-5">{new Date(flight.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</h5>
           </div>
 
           
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <span className="fw-bold text-muted">{flight.departure.iata}</span>
+            <span className="fw-bold text-muted fs-5">{flight.departure.iata}</span>
             <div className="flex-grow-1 mx-2 border-top border-dark"></div>
-            <span className="fw-bold text-muted">{flight.arrival.iata}</span>
+            <span className="fw-bold text-muted fs-5">{flight.arrival.iata}</span>
           </div>
 
           
           <Card.Text className="text-center mb-3">
-            <strong>{flight.airline.name} {flight.flight.number}</strong>
+            <strong className='fs-5'>{flight.airline.name} {flight.flight.number}</strong>
           </Card.Text>
 
           
