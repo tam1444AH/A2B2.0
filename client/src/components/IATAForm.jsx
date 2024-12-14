@@ -27,7 +27,7 @@ const IATAForm = () => {
             />
           </Form.Group>
           <div className="d-flex justify-content-center">
-            <Button variant="danger" type="submit">
+            <Button variant="danger" type="submit" className='fw-medium'>
               Submit
             </Button>
           </div>

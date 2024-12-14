@@ -23,8 +23,8 @@ const FlightCard = ({ flight }) => {
           </div>
 
           
-          <Card.Text className="text-center mb-3">
-            <strong className='fs-5'>{flight.airline.name} {flight.flight.number}</strong>
+          <Card.Text className="text-center mb-3" style={{ fontSize: '1.125rem' }}>
+            <strong>{flight.airline.name} {flight.flight.number}</strong>
           </Card.Text>
 
           
@@ -36,8 +36,8 @@ const FlightCard = ({ flight }) => {
 
         
         <Card.Footer className="d-flex justify-content-between">
-          <Button variant="danger" size="sm">Save Flight</Button>
-          <Button variant="danger" size="sm">Book Flight</Button>
+          <Button variant="danger" size="sm" className='fw-medium'>Save Flight</Button>
+          <Button variant="danger" size="sm" className='fw-medium'>Book Flight</Button>
         </Card.Footer>
       </Card>
     </div>
