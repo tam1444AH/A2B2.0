@@ -16,6 +16,7 @@ export const NavigationBar = () => {
                 <Nav className="me-auto">
                     <Nav.Link href="/login">Login</Nav.Link>
                     <Nav.Link href="/signup">Sign Up</Nav.Link>
+                    <Nav.Link href="/hotels">Hotels</Nav.Link>
                 </Nav>
                 </Navbar.Collapse>
             </Container>
