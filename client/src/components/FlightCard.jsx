@@ -5,7 +5,7 @@ import { IoAirplaneSharp } from 'react-icons/io5';
 
 const FlightCard = ({ flight }) => {
   return (
-    <div className="col-lg-4 mb-4">
+    <div className="col-lg-4 col-md-6 col-sm-12 mb-4">
       <Card className="shadow-sm h-100">
         <Card.Body className="d-flex flex-column justify-content-between">
           

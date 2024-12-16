@@ -1,14 +1,15 @@
 import React from 'react'
 import { IoMdCloud } from "react-icons/io";
 import FlightCard from './FlightCard';
-import flights from '../data/flights';
 
-const FlightsBox = () => {
+
+const FlightsBox = ({ flights }) => {
   return (
     <div className='container-lg d-flex flex-column bg-dark text-center rounded align-items-center justify-content-center p-2 mb-4 mx-auto' style={{ height: '50vh'}}>
       <div className='row overflow-auto w-100'>
-        {flights.flights.length > 0 ? flights.flights.map((flight, index) => (
-          <FlightCard flight={flight} key={index}/>
+        {flights.length > 0 ? 
+          flights.map((flight, index) => (
+            <FlightCard flight={flight} key={index}/>
         )) : (
           <div className='text-center'>
             <IoMdCloud className='display-3'/>
