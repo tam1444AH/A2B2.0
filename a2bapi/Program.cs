@@ -1,7 +1,7 @@
 using MySql.Data.MySqlClient;
 using DotNetEnv;
-using System.Net.Http.Json;
 using a2bapi.Models;
+using a2bapi.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -98,12 +98,13 @@ app.MapGet("/test-db", async (MySqlConnection dbConnection) =>
     }
 });
 
-static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFactory) {
-
+static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFactory)
+{
     var apiKey = Environment.GetEnvironmentVariable("AMADEUS_API_KEY");
     var apiSecret = Environment.GetEnvironmentVariable("AMADEUS_API_SECRET");
 
-    if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret)) {
+    if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
+    {
         throw new Exception("Amadeus API credentials are missing.");
     }
 
@@ -111,34 +112,38 @@ static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFacto
     var tokenUrl = "https://test.api.amadeus.com/v1/security/oauth2/token";
     var authHeader = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{apiKey}:{apiSecret}"));
 
-    var content = new FormUrlEncodedContent(new[]
+    var content = new FormUrlEncodedContent(new Dictionary<string, string>
     {
-        new KeyValuePair<string, string>("grant_type", "client_credentials")
-
+        { "grant_type", "client_credentials" }
     });
 
     client.DefaultRequestHeaders.Add("Authorization", $"Basic {authHeader}");
 
     var response = await client.PostAsync(tokenUrl, content);
 
-    if (!response.IsSuccessStatusCode) {
-
+    if (!response.IsSuccessStatusCode)
+    {
         var error = await response.Content.ReadAsStringAsync();
         throw new Exception($"Failed to get access token: {error}");
-
     }
 
-    var json = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-    return json?["access_token"] ?? throw new Exception("Access token not found in response.");
+    var jsonResponse = await response.Content.ReadAsStringAsync();
+    Console.WriteLine($"Token Response: {jsonResponse}");
 
+    var tokenResponse = System.Text.Json.JsonSerializer.Deserialize<AccessTokenResponse>(jsonResponse);
+
+    return tokenResponse?.AccessToken ?? throw new Exception("Access token not found in response.");
 }
+
 
 app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string stars, IHttpClientFactory httpClientFactory) =>
 {
     to = to.ToUpper();
 
     try {
+        Console.WriteLine("Starting GetAccessTokenAsync...");
         var accessToken = await GetAccessTokenAsync(httpClientFactory);
+        Console.WriteLine($"Retrieved Access Token: {accessToken}");
 
         var client = httpClientFactory.CreateClient();
         var hotelApiUrl = "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city";
@@ -153,23 +158,34 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string 
         };
 
         var url = $"{hotelApiUrl}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}";
+        Console.WriteLine($"Request URL: {url}");
 
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
         var response = await client.GetAsync(url);
 
         if (!response.IsSuccessStatusCode) {
             var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error Response: {error}");
             return Results.Problem($"Error fetching hotels: {error}");
         }
 
-        var data = await response.Content.ReadAsStringAsync();
-        return Results.Ok(System.Text.Json.JsonSerializer.Deserialize<object>(data));
+        var responseBody = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Hotel API Response: {responseBody}");
+
+        try {
+            var hotels = System.Text.Json.JsonSerializer.Deserialize<List<Hotel>>(responseBody, JsonOptions.Default);
+            return Results.Ok(hotels);
+        } catch (Exception ex) {
+            Console.WriteLine($"Deserialization error: {ex.Message}");
+            throw;
+        }
     }
     catch (Exception ex) {
+        Console.WriteLine($"Error: {ex.Message}");
         return Results.Problem($"Error: {ex.Message}");
     }
-
 });
+
 
 
 app.MapGet("/", () => "Hello World!");
