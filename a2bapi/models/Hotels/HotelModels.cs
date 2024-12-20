@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-
 using System.Text.Json.Serialization;
 
-namespace a2bapi.Models
+namespace a2bapi.Models.Hotels
 {
     public class Hotel
     {

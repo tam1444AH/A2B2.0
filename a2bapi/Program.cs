@@ -1,8 +1,8 @@
 using MySql.Data.MySqlClient;
 using DotNetEnv;
 using a2bapi.Models;
-using a2bapi.Utilities;
 using Microsoft.AspNetCore.Diagnostics;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -130,7 +130,7 @@ static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFacto
     var jsonResponse = await response.Content.ReadAsStringAsync();
     Console.WriteLine($"Token Response: {jsonResponse}");
 
-    var tokenResponse = System.Text.Json.JsonSerializer.Deserialize<AccessTokenResponse>(jsonResponse);
+    var tokenResponse = JsonSerializer.Deserialize<AccessTokenResponse>(jsonResponse);
 
     return tokenResponse?.AccessToken ?? throw new Exception("Access token not found in response.");
 }
@@ -138,9 +138,11 @@ static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFacto
 
 app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string stars, IHttpClientFactory httpClientFactory) =>
 {
-    to = to.ToUpper();
-
+    
     try {
+
+        to = to.ToUpper();
+
         Console.WriteLine("Starting GetAccessTokenAsync...");
         var accessToken = await GetAccessTokenAsync(httpClientFactory);
         Console.WriteLine($"Retrieved Access Token: {accessToken}");
@@ -148,7 +150,7 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string 
         var client = httpClientFactory.CreateClient();
         var hotelApiUrl = "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city";
 
-        var query = new Dictionary<string, string>
+        var queryParameters = new Dictionary<string, string>
         {
             { "cityCode", to },
             { "radius", dist },
@@ -157,32 +159,41 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string 
             { "hotelSource", "ALL" }
         };
 
-        var url = $"{hotelApiUrl}?{string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"))}";
-        Console.WriteLine($"Request URL: {url}");
+        var queryString = string.Join("&", queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
+        var requestUrl = $"{hotelApiUrl}?{queryString}";
+        Console.WriteLine($"Request URL: {requestUrl}");
 
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
-        var response = await client.GetAsync(url);
+        var response = await client.GetAsync(requestUrl);
 
-        if (!response.IsSuccessStatusCode) {
+        if (!response.IsSuccessStatusCode) 
+        {
+
             var error = await response.Content.ReadAsStringAsync();
             Console.WriteLine($"Error Response: {error}");
             return Results.Problem($"Error fetching hotels: {error}");
+
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Hotel API Response: {responseBody}");
+        var jsonString = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Hotel API Response: {jsonString}");
+        
+        var hotelResponse = JsonSerializer.Deserialize<a2bapi.Models.Hotels.HotelApiResponse>(jsonString);
+        
 
-        try {
-            var hotels = System.Text.Json.JsonSerializer.Deserialize<List<Hotel>>(responseBody, JsonOptions.Default);
-            return Results.Ok(hotels);
-        } catch (Exception ex) {
-            Console.WriteLine($"Deserialization error: {ex.Message}");
-            throw;
+        if (hotelResponse?.Data == null)
+        {
+            return Results.Problem("No hotels found.");
         }
+
+        return Results.Ok(hotelResponse.Data);
+
     }
     catch (Exception ex) {
+
         Console.WriteLine($"Error: {ex.Message}");
         return Results.Problem($"Error: {ex.Message}");
+        
     }
 });
 
