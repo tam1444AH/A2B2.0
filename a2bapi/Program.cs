@@ -3,6 +3,8 @@ using DotNetEnv;
 using a2bapi.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -196,6 +198,54 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", async (string to, string dist, string 
         
     }
 });
+
+
+app.MapPost("/signup", async(HttpContext context, MySqlConnection dbConnection) => 
+{
+
+    try 
+    {
+        var body = await context.Request.ReadFromJsonAsync<User>();
+        if (body == null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password)) 
+        {
+            return Results.BadRequest("Email and password are required.");
+        }
+
+        var checkUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        checkUserCmd.Parameters.AddWithValue("@Email", body.Email);
+        await dbConnection.OpenAsync();
+        var existingUser = await checkUserCmd.ExecuteScalarAsync();
+
+        if (existingUser != null) 
+        {
+            await dbConnection.CloseAsync();
+            return Results.Conflict("Email already in use.");
+        }
+
+        string hashedPassword = HashPassword(body.Password);
+
+        var insertUserCmd = new MySqlCommand("INSERT INTO users_net (email, password) VALUES (@Email, @Password)", dbConnection);
+        insertUserCmd.Parameters.AddWithValue("@Email", body.Email);
+        insertUserCmd.Parameters.AddWithValue("@Password", hashedPassword);
+
+        await insertUserCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        return Results.Ok("User registered successfully.");
+
+    }
+    catch (Exception ex) {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred during user registration.");
+    }
+
+});
+
+static string HashPassword(string password) 
+{
+    var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+    return Convert.ToBase64String(hashedBytes);
+}
 
 
 
