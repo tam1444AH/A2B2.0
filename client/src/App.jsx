@@ -5,20 +5,23 @@ import Homepage from './pages/Homepage'
 import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import HotelsPage from './pages/HotelsPage'
+import AuthProvider from './context/AuthProvider'
 
 function App() {
   
   return (
     <>
-      <Router>
-        <NavigationBar />
-        <Routes>
-          <Route path="/" element={<Homepage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/hotels" element={<HotelsPage />} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <NavigationBar />
+          <Routes>
+            <Route path="/" element={<Homepage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/hotels" element={<HotelsPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </>
   )
 }
