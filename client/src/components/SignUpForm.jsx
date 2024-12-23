@@ -41,8 +41,11 @@ const SignUpForm = () => {
 
         try {
             const response = await axios.post('http://localhost:5030/signup', formData);
-            console.log(response)
-            setToastMessage(response.data);
+            console.log(response);
+            const { Token, Message } = response.data;
+            localStorage.setItem('authToken', Token);
+
+            setToastMessage(Message);
             setToastType('success');
             setShowToast(true);
         } catch (error) {
