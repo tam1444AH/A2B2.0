@@ -32,7 +32,7 @@ export const NavigationBar = () => {
             </Nav>
             {isLoggedIn && (
               <Button variant='outline-light' onClick={logOut}>
-                Log Out
+                Logout
               </Button>
             )}
           </Navbar.Collapse>

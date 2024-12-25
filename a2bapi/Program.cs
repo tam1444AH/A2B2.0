@@ -27,7 +27,7 @@ builder.Services.AddAuthentication( x => {
     {
         ValidIssuer = "http://localhost:5030",
         ValidAudience = "http://localhost:5173",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "YourDevSecretKey")),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey")),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
@@ -168,7 +168,7 @@ static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFacto
 
 static string GenerateJwt(string email) 
 {
-    var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? "YourDevSecretKey";
+    var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey";
     var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
     var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
@@ -285,7 +285,7 @@ app.MapPost("/signup", async(HttpContext context, MySqlConnection dbConnection) 
 
         var jwt = GenerateJwt(body.Email);
 
-        return Results.Ok(new { Message = "User registered successfully.", Token = jwt });
+        return Results.Ok(new { message = "User registered successfully.", token = jwt });
 
     }
     catch (Exception ex) 
@@ -322,7 +322,7 @@ app.MapPost("/login", async (HttpContext context, MySqlConnection dbConnection) 
 
         var jwt = GenerateJwt(body.Email);
 
-        return Results.Ok(new { Message = "Login successful.", Token = jwt});
+        return Results.Ok(new { message = "Login successful.", token = jwt});
     }
     catch (Exception ex) 
     {
