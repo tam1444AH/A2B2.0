@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import Container from 'react-bootstrap/Container';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
@@ -6,8 +6,12 @@ import Col from 'react-bootstrap/Col';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthProvider';
 
 const SignUpForm = () => {
+    const navigate = useNavigate();
+    const { setIsLoggedIn } = useContext(AuthContext);
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -17,6 +21,7 @@ const SignUpForm = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('');
     const [showToast, setShowToast] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,11 +29,13 @@ const SignUpForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
         if (formData.password.length < 8) {
             setToastType('error');
             setToastMessage('Password length must be at least 8 characters.');
             setShowToast(true);
+            setIsSubmitting(false);
             return;
         }
 
@@ -36,6 +43,7 @@ const SignUpForm = () => {
             setToastType('error');
             setToastMessage('Passwords do not match.');
             setShowToast(true);
+            setIsSubmitting(false);
             return;
         }
 
@@ -48,13 +56,17 @@ const SignUpForm = () => {
             setToastMessage(message);
             setToastType('success');
             setShowToast(true);
+
+            setIsLoggedIn(true);
         } catch (error) {
             console.log(error)
             setToastMessage(
-                error.response?.data || 'An error occurred. Please try again.'
+                error.response?.data || 'An error occurred during signup. Please try again.'
             );
             setToastType('error');
             setShowToast(true);
+        } finally {
+            setIsSubmitting(false);
         }
 
     };
@@ -124,8 +136,8 @@ const SignUpForm = () => {
                         />
                     </Form.Group>
                     <div className="d-flex justify-content-center">
-                        <Button variant="danger" type="submit" className='fw-medium'>
-                            Submit
+                        <Button variant="danger" type="submit" className='fw-medium' disabled={isSubmitting}>
+                            {isSubmitting ? 'Submitting...' : 'Submit'}
                         </Button>
                     </div>
                 </Form>
