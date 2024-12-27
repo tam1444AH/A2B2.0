@@ -9,7 +9,6 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthProvider';
 
 const SignUpForm = () => {
-    const navigate = useNavigate();
     const { setIsLoggedIn } = useContext(AuthContext);
 
     const [formData, setFormData] = useState({

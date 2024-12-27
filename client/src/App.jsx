@@ -5,6 +5,7 @@ import Homepage from './pages/Homepage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import HotelsPage from './pages/HotelsPage';
+import ProfilePage from './pages/ProfilePage';
 import AuthProvider from './context/AuthProvider';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
@@ -46,7 +47,7 @@ function App() {
               path='/profile'
               element={
                 <PrivateRoute>
-                  <div>ProfilePage</div>
+                  <ProfilePage />
                 </PrivateRoute>
               }
             />
