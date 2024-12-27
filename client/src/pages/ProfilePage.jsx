@@ -9,7 +9,9 @@ import { IoAirplane, IoBed } from "react-icons/io5";
 const ProfilePage = () => {
   const [greeting, setGreeting] = useState("");
   const dataF = flights.flights;
-  const dataH = hotels.hotels;
+  // const dataF = [];
+  // const dataH = hotels.hotels;
+  const dataH = [];
 
   useEffect(() => {
     const hour = new Date().getHours();
