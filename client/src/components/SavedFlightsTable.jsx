@@ -3,6 +3,8 @@ import { Table, Button } from "react-bootstrap";
 import { IoAirplane, IoTrash } from "react-icons/io5";
 
 const SavedFlightsTable = ({ flights }) => {
+  const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+
   if (flights.length === 0) {
     return (
       <div
@@ -21,6 +23,8 @@ const SavedFlightsTable = ({ flights }) => {
         <thead className="bg-dark text-white">
           <tr>
             <th>Flight Info</th>
+            <th>Date</th>
+            <th>Price</th>
             <th>Departure</th>
             <th>Arrival</th>
             <th>Actions</th>
@@ -31,6 +35,12 @@ const SavedFlightsTable = ({ flights }) => {
             <tr key={index}>
               <td>
                 {flight.airline.name} {flight.flight.number}
+              </td>
+              <td>
+                {flight.flight_date}
+              </td>
+              <td>
+                ${getRandomPrice()}
               </td>
               <td>
                 {new Date(flight.departure.scheduled).toLocaleTimeString([], {

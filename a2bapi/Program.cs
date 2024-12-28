@@ -345,6 +345,69 @@ static string HashPassword(string password)
     return Convert.ToBase64String(hashedBytes);
 }
 
+app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
+
+        var body = await context.Request.ReadFromJsonAsync<dynamic>();
+        if (body == null)
+        {
+            return Results.BadRequest("Invalid flight data.");
+        }
+
+        string flightName = body.flightName;
+        string departureTime = body.departureTime;
+        string arrivalTime = body.arrivalTime;
+        string flightDate = body.flightDate;
+        string departureIata = body.departureIata;
+        string arrivalIata = body.arrivalIata;
+
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var insertFlightCmd = new MySqlCommand(
+            "INSERT INTO saved_flights_net (flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, user_id) " +
+            "VALUES (@FlightName, @DepartureTime, @ArrivalTime, @FlightDate, @DepartureIata, @ArrivalIata, @UserId)", 
+            dbConnection);
+
+        insertFlightCmd.Parameters.AddWithValue("@FlightName", flightName);
+        insertFlightCmd.Parameters.AddWithValue("@DepartureTime", departureTime);
+        insertFlightCmd.Parameters.AddWithValue("@ArrivalTime", arrivalTime);
+        insertFlightCmd.Parameters.AddWithValue("@FlightDate", flightDate);
+        insertFlightCmd.Parameters.AddWithValue("@DepartureIata", departureIata);
+        insertFlightCmd.Parameters.AddWithValue("@ArrivalIata", arrivalIata);
+        insertFlightCmd.Parameters.AddWithValue("@UserId", userId);
+
+        await dbConnection.OpenAsync();
+        await insertFlightCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        return Results.Ok(new { message = "Flight successfully saved." });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while saving the flight.");
+    }
+});
+
 app.MapGet("/", () => "Hello World!");
 
 app.Run();

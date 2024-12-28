@@ -24,8 +24,8 @@ const SavedHotelsTable = ({ hotels }) => {
           <tr>
             <th>Hotel</th>
             <th>Distance</th>
-            <th>Location</th>
             <th>Price</th>
+            <th>Location</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -34,8 +34,8 @@ const SavedHotelsTable = ({ hotels }) => {
             <tr key={index}>
               <td>{hotel.name}</td>
               <td>{hotel.distance.value} MI.</td>
+              <td>${getRandomPrice()}</td>
               <td>{hotel.address.countryCode}</td>
-              <td>${getRandomPrice()} per night</td>
               <td className="d-flex gap-2 justify-content-around">
                 <Button variant="danger" size="lg">
                   <IoTrash />

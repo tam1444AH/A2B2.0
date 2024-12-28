@@ -1,9 +1,59 @@
-import React from 'react';
-import { Card, Button } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Card, Button, Toast, ToastContainer, Spinner } from 'react-bootstrap';
 import { IoAirplaneSharp } from 'react-icons/io5';
 
 
 const FlightCard = ({ flight }) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState(false);
+  const [toastType, setToastType] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleToast = (type, message) => {
+    setToastType(type);
+    setToastMessage(message);
+    setToast(true);
+  };
+
+  const handleToastClose = () => {
+    setToast(false);
+  };
+
+  const handleSaveFlight = async () => {
+    setIsSaving(true);
+
+    try {
+      const response = await fetch("http://localhost:5030/save-flight", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify({
+          flightName: `${flight.airline.name} ${flight.flight.number}`,
+          departureTime: new Date(flight.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+          arrivalTime: new Date(flight.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+          flightDate: flight.flight_date,
+          departureIata: flight.departure.iata,
+          arrivalIata: flight.arrival.iata,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        handleToast('success', data.message || 'Flight successfully saved.');
+      } else {
+        const error = await response.json();
+        handleToast('danger', error.message || 'Failed to save flight.');
+      }
+
+    } catch (error) {
+      handleToast('danger', 'An error occurred while saving the flight.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="col-lg-4 col-md-6 col-sm-12 mb-4">
       <Card className="shadow-sm h-100">
@@ -36,10 +86,45 @@ const FlightCard = ({ flight }) => {
 
         
         <Card.Footer className="d-flex justify-content-between">
-          <Button variant="danger" size="sm" className='fw-medium'>Save Flight</Button>
+          <Button
+              variant="danger"
+              size="sm"
+              className="fw-medium"
+              disabled={isSaving}
+              onClick={handleSaveFlight}
+          >
+            {isSaving ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Saving...
+              </>
+            ) : (
+              'Save Flight'
+            )}
+          </Button>
           <Button variant="danger" size="sm" className='fw-medium'>Book Flight</Button>
         </Card.Footer>
       </Card>
+
+      <ToastContainer position="top-end" className="p-3">
+        <Toast
+          show={toast}
+          onClose={handleToastClose}
+          delay={3000}
+          autohide
+          bg={toastType}
+        >
+          <Toast.Header closeButton>
+            <strong className="me-auto text-dark">
+              {toastType === 'success'
+                ? 'Success!'
+                : toastType === 'danger'
+                ? 'Error'
+                : 'Info'}
+            </strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };

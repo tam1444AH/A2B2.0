@@ -10,8 +10,8 @@ const ProfilePage = () => {
   const [greeting, setGreeting] = useState("");
   const dataF = flights.flights;
   // const dataF = [];
-  // const dataH = hotels.hotels;
-  const dataH = [];
+  const dataH = hotels.hotels;
+  // const dataH = [];
 
   useEffect(() => {
     const hour = new Date().getHours();
