@@ -479,6 +479,68 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
     }
 });
 
+app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
+
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var getFlightsCmd = new MySqlCommand(
+            "SELECT flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, price " +
+            "FROM saved_flights_net WHERE user_id = @UserId",
+            dbConnection);
+
+        getFlightsCmd.Parameters.AddWithValue("@UserId", userId);
+
+        await dbConnection.OpenAsync();
+        var reader = await getFlightsCmd.ExecuteReaderAsync();
+
+        var savedFlights = new List<object>();
+        while (await reader.ReadAsync())
+        {
+            savedFlights.Add(new
+            {
+                FlightName = reader["flight_name"].ToString(),
+                DepartureTime = reader["departure_time"].ToString(),
+                ArrivalTime = reader["arrival_time"].ToString(),
+                FlightDate = reader["flight_date"].ToString(),
+                DepartureIata = reader["departure_iata"].ToString(),
+                ArrivalIata = reader["arrival_iata"].ToString(),
+                Price = Convert.ToInt32(reader["price"])
+            });
+        }
+
+        await dbConnection.CloseAsync();
+
+        return Results.Ok(savedFlights);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while fetching saved flights.");
+    }
+});
+
+
+app.MapGet("/saved-hotels", () => "Route under development.");
 
 app.MapGet("/", () => "Hello World!");
 

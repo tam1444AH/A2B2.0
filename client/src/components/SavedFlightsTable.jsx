@@ -4,7 +4,6 @@ import { IoAirplane, IoTrash } from "react-icons/io5";
 
 const SavedFlightsTable = ({ flights }) => {
   const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
-
   if (flights.length === 0) {
     return (
       <div
@@ -32,6 +31,33 @@ const SavedFlightsTable = ({ flights }) => {
         </thead>
         <tbody>
           {flights.map((flight, index) => (
+            <tr key={index}>
+              <td>
+                {flight.flightName}
+              </td>
+              <td>
+                {new Date(flight.flightDate).toLocaleDateString()}
+              </td>
+              <td>
+                ${flight.price}
+              </td>
+              <td>
+                {flight.departureTime}{" "}({flight.departureIata})
+              </td>
+              <td>
+                {flight.arrivalTime}{" "}({flight.arrivalIata})
+              </td>
+              <td className="d-flex gap-2 justify-content-around">
+                <Button variant="danger" size="lg">
+                  <IoTrash />
+                </Button>
+                <Button variant="primary" size="lg">
+                  <IoAirplane />
+                </Button>
+              </td>
+            </tr>
+          ))}
+          {/* {flights.map((flight, index) => (
             <tr key={index}>
               <td>
                 {flight.airline.name} {flight.flight.number}
@@ -67,7 +93,7 @@ const SavedFlightsTable = ({ flights }) => {
                 </Button>
               </td>
             </tr>
-          ))}
+          ))} */}
         </tbody>
       </Table>
     </div>

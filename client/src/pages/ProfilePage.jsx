@@ -13,6 +13,9 @@ const ProfilePage = () => {
   const dataH = hotels.hotels;
   // const dataH = [];
 
+  const [fetchedFlights, setFetchedFlights] = useState([]);
+  const [fetchedHotels, setFetchedHotels] = useState([]);
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
@@ -26,6 +29,30 @@ const ProfilePage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchSavedFlights = async () => {
+      try {
+        const response = await fetch("http://localhost:5030/saved-flights", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`, 
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFetchedFlights(data);
+          console.log(data);
+        } else {
+          console.error("Failed to fetch saved flights");
+        }
+      } catch (error) {
+        console.error("Error fetching saved flights:", error);
+      }
+    };
+
+    fetchSavedFlights();
+  }, []);
+
   return (
     <div className="min-vh-100 bg-black text-white">
       <ProfileBanner greeting={greeting} />
@@ -33,7 +60,7 @@ const ProfilePage = () => {
         <div className="row g-4">
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Flights <IoAirplane /></p>
-            <SavedFlightsTable flights={dataF} />
+            <SavedFlightsTable flights={fetchedFlights} />
           </div>
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Hotels <IoBed /></p>
