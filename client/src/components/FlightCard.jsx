@@ -5,9 +5,12 @@ import { IoAirplaneSharp } from 'react-icons/io5';
 
 const FlightCard = ({ flight }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [toast, setToast] = useState(false);
   const [toastType, setToastType] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+
+  const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
 
   const handleToast = (type, message) => {
     setToastType(type);
@@ -36,21 +39,23 @@ const FlightCard = ({ flight }) => {
           flightDate: flight.flight_date,
           departureIata: flight.departure.iata,
           arrivalIata: flight.arrival.iata,
+          flightPrice: getRandomPrice()
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
         handleToast('success', data.message || 'Flight successfully saved.');
+        setIsSaved(true);
       } else {
         const error = await response.json();
         handleToast('danger', error.message || 'Failed to save flight.');
       }
 
     } catch (error) {
-      handleToast('danger', 'An error occurred while saving the flight.');
+        handleToast('danger', 'An error occurred while saving the flight.');
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
   };
 
@@ -82,18 +87,20 @@ const FlightCard = ({ flight }) => {
             <span className="badge bg-dark text-white">{flight.flight_status}</span>
             <span className="badge bg-dark text-white">{flight.flight_date}</span>
           </div>
+
+          <span className="text-black fw-medium fs-4">${getRandomPrice()}</span>
         </Card.Body>
 
         
         <Card.Footer className="d-flex justify-content-between">
           <Button
-              variant="danger"
-              size="sm"
-              className="fw-medium"
-              disabled={isSaving}
-              onClick={handleSaveFlight}
+            variant="danger"
+            size="sm"
+            className="fw-medium"
+            disabled={isSaving || isSaved} 
+            onClick={handleSaveFlight}
           >
-            {isSaving ? (
+            {isSaved ? 'Saved' : isSaving ? (
               <>
                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Saving...
               </>
@@ -122,7 +129,7 @@ const FlightCard = ({ flight }) => {
                 : 'Info'}
             </strong>
           </Toast.Header>
-          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+          <Toast.Body className="text-white text-start">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
     </div>

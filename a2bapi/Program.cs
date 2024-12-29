@@ -355,18 +355,26 @@ app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnect
             return Results.Unauthorized();
         }
 
-        var body = await context.Request.ReadFromJsonAsync<dynamic>();
-        if (body == null)
+        var body = await context.Request.ReadFromJsonAsync<JsonElement>();
+        if (!body.TryGetProperty("flightName", out var flightNameElement) ||
+            !body.TryGetProperty("departureTime", out var departureTimeElement) ||
+            !body.TryGetProperty("arrivalTime", out var arrivalTimeElement) ||
+            !body.TryGetProperty("flightDate", out var flightDateElement) ||
+            !body.TryGetProperty("departureIata", out var departureIataElement) ||
+            !body.TryGetProperty("arrivalIata", out var arrivalIataElement) ||
+            !body.TryGetProperty("flightPrice", out var flightPriceElement))
         {
             return Results.BadRequest("Invalid flight data.");
         }
 
-        string flightName = body.flightName;
-        string departureTime = body.departureTime;
-        string arrivalTime = body.arrivalTime;
-        string flightDate = body.flightDate;
-        string departureIata = body.departureIata;
-        string arrivalIata = body.arrivalIata;
+        string flightName = flightNameElement.GetString() ?? string.Empty;
+        string departureTime = departureTimeElement.GetString() ?? string.Empty;
+        string arrivalTime = arrivalTimeElement.GetString() ?? string.Empty;
+        string flightDate = flightDateElement.GetString() ?? string.Empty;
+        string departureIata = departureIataElement.GetString() ?? string.Empty;
+        string arrivalIata = arrivalIataElement.GetString() ?? string.Empty;
+        int flightPrice = flightPriceElement.GetInt32();
+
 
         var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
         getUserCmd.Parameters.AddWithValue("@Email", userEmail);
@@ -383,8 +391,8 @@ app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnect
         int userId = Convert.ToInt32(userIdResult);
 
         var insertFlightCmd = new MySqlCommand(
-            "INSERT INTO saved_flights_net (flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, user_id) " +
-            "VALUES (@FlightName, @DepartureTime, @ArrivalTime, @FlightDate, @DepartureIata, @ArrivalIata, @UserId)", 
+            "INSERT INTO saved_flights_net (flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, user_id, price) " +
+            "VALUES (@FlightName, @DepartureTime, @ArrivalTime, @FlightDate, @DepartureIata, @ArrivalIata, @UserId, @Price)",
             dbConnection);
 
         insertFlightCmd.Parameters.AddWithValue("@FlightName", flightName);
@@ -394,6 +402,7 @@ app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnect
         insertFlightCmd.Parameters.AddWithValue("@DepartureIata", departureIata);
         insertFlightCmd.Parameters.AddWithValue("@ArrivalIata", arrivalIata);
         insertFlightCmd.Parameters.AddWithValue("@UserId", userId);
+        insertFlightCmd.Parameters.AddWithValue("@Price", flightPrice);
 
         await dbConnection.OpenAsync();
         await insertFlightCmd.ExecuteNonQueryAsync();
@@ -407,6 +416,69 @@ app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnect
         return Results.Problem("An error occurred while saving the flight.");
     }
 });
+
+
+app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
+
+        var body = await context.Request.ReadFromJsonAsync<JsonElement>();
+        if (!body.TryGetProperty("hotelName", out var hotelNameElement) ||
+            !body.TryGetProperty("hotelDistance", out var hotelDistanceElement) ||
+            !body.TryGetProperty("hotelStars", out var hotelStarsElement) ||
+            !body.TryGetProperty("hotelPrice", out var hotelPriceElement))
+        {
+            return Results.BadRequest("Invalid hotel data.");
+        }
+
+        string hotelName = hotelNameElement.GetString() ?? string.Empty;
+        float hotelDistance = hotelDistanceElement.GetSingle();
+        int hotelStars = hotelStarsElement.GetInt32();
+        int hotelPrice = hotelPriceElement.GetInt32();
+
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var insertHotelCmd = new MySqlCommand(
+            "INSERT INTO saved_hotels_net (hotel_name, hotel_distance, hotel_rating, user_id, price) VALUES (@Name, @Distance, @Rating, @UserId, @Price)",
+            dbConnection);
+
+        insertHotelCmd.Parameters.AddWithValue("@Name", hotelName);
+        insertHotelCmd.Parameters.AddWithValue("@Distance", hotelDistance);
+        insertHotelCmd.Parameters.AddWithValue("@Rating", hotelStars);
+        insertHotelCmd.Parameters.AddWithValue("@UserId", userId);
+        insertHotelCmd.Parameters.AddWithValue("@Price", hotelPrice);
+
+        await dbConnection.OpenAsync();
+        await insertHotelCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        return Results.Ok(new { message = "Hotel successfully saved." });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while saving the hotel.");
+    }
+});
+
 
 app.MapGet("/", () => "Hello World!");
 

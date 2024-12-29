@@ -1,9 +1,24 @@
 import React from "react";
 import { Table, Button } from "react-bootstrap";
 import { IoTrash, IoBed } from "react-icons/io5";
+import { FaStar, FaRegStar } from 'react-icons/fa';
 
 const SavedHotelsTable = ({ hotels }) => {
   const getRandomPrice = () => Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
+
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        i <= rating ? (
+          <FaStar key={i} className="text-warning" />
+        ) : (
+          <FaRegStar key={i} className="text-warning" />
+        )
+      );
+    }
+    return stars;
+  };
 
   if (hotels.length === 0) {
     return (
@@ -25,6 +40,7 @@ const SavedHotelsTable = ({ hotels }) => {
             <th>Hotel</th>
             <th>Distance</th>
             <th>Price</th>
+            <th>Rating</th>
             <th>Location</th>
             <th>Actions</th>
           </tr>
@@ -33,8 +49,9 @@ const SavedHotelsTable = ({ hotels }) => {
           {hotels.map((hotel, index) => (
             <tr key={index}>
               <td>{hotel.name}</td>
-              <td>{hotel.distance.value} MI.</td>
+              <td>{hotel.distance.value} MI</td>
               <td>${getRandomPrice()}</td>
+              <td>{hotel.rating}</td>
               <td>{hotel.address.countryCode}</td>
               <td className="d-flex gap-2 justify-content-around">
                 <Button variant="danger" size="lg">
