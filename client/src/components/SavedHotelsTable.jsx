@@ -53,7 +53,27 @@ const SavedHotelsTable = ({ hotels }) => {
               <td>{renderStars(hotel.hotelRating)}</td>
               <td>{hotel.hotelCountryCode}</td>
               <td className="d-flex gap-2 justify-content-around">
-                <Button variant="danger" size="lg">
+                <Button variant="danger" size="lg"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`http://localhost:5030/delete-hotel/${hotel.id}`, {
+                        method: "DELETE",
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                        },
+                      });
+                
+                      if (response.ok) {
+                        console.log("Hotel deleted successfully.");
+                        setHotels(hotels.filter((h) => h.id !== hotel.id)); // Update state
+                      } else {
+                        console.error("Failed to delete hotel.");
+                      }
+                    } catch (error) {
+                      console.error("Error:", error);
+                    }
+                  }}
+                >
                   <IoTrash />
                 </Button>
                 <Button variant="primary" size="lg">

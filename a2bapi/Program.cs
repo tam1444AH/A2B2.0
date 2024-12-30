@@ -504,7 +504,7 @@ app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnec
         int userId = Convert.ToInt32(userIdResult);
 
         var getFlightsCmd = new MySqlCommand(
-            "SELECT flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, price " +
+            "SELECT id, flight_name, departure_time, arrival_time, flight_date, departure_iata, arrival_iata, price " +
             "FROM saved_flights_net WHERE user_id = @UserId",
             dbConnection);
 
@@ -518,6 +518,7 @@ app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnec
         {
             savedFlights.Add(new
             {
+                Id = Convert.ToInt32(reader["id"]),
                 FlightName = reader["flight_name"].ToString(),
                 DepartureTime = reader["departure_time"].ToString(),
                 ArrivalTime = reader["arrival_time"].ToString(),
@@ -565,7 +566,7 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
         int userId = Convert.ToInt32(userIdResult);
 
         var getHotelsCmd = new MySqlCommand(
-            "SELECT hotel_name, hotel_distance, hotel_rating, price, country_code " +
+            "SELECT id, hotel_name, hotel_distance, hotel_rating, price, country_code " +
             "FROM saved_hotels_net WHERE user_id = @UserId",
             dbConnection);
 
@@ -579,6 +580,7 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
         {
             savedHotels.Add(new
             {
+                Id = Convert.ToInt32(reader["id"]),
                 HotelName = reader["hotel_name"].ToString(),
                 HotelDistance = Convert.ToDecimal(reader["hotel_distance"]),
                 HotelRating = Convert.ToInt32(reader["hotel_rating"]),
@@ -598,9 +600,92 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
     }
 });
 
-app.MapDelete("/delete-flight", () => "Route under development.");
+app.MapDelete("/delete-flight/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
 
-app.MapDelete("/delete-hotel", () => "Route under development.");
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var deleteCmd = new MySqlCommand(
+            "DELETE FROM saved_flights_net WHERE id = @Id AND user_id = @UserId",
+            dbConnection);
+        deleteCmd.Parameters.AddWithValue("@Id", id);
+        deleteCmd.Parameters.AddWithValue("@UserId", userId);
+
+        await dbConnection.OpenAsync();
+        int rowsAffected = await deleteCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        return rowsAffected > 0 ? Results.Ok("Flight deleted successfully.") : Results.NotFound("Flight not found.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while deleting the flight.");
+    }
+});
+
+app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
+
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var deleteCmd = new MySqlCommand(
+            "DELETE FROM saved_hotels_net WHERE id = @Id AND user_id = @UserId",
+            dbConnection);
+        deleteCmd.Parameters.AddWithValue("@Id", id);
+        deleteCmd.Parameters.AddWithValue("@UserId", userId);
+
+        await dbConnection.OpenAsync();
+        int rowsAffected = await deleteCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        return rowsAffected > 0 ? Results.Ok("Hotel deleted successfully.") : Results.NotFound("Hotel not found.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while deleting the hotel.");
+    }
+});
+
 
 app.MapPost("/book-flight", () => "Route under development.");
 

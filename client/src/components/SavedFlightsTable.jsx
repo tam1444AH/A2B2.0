@@ -3,7 +3,7 @@ import { Table, Button } from "react-bootstrap";
 import { IoAirplane, IoTrash } from "react-icons/io5";
 
 const SavedFlightsTable = ({ flights }) => {
-  const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+
   if (flights.length === 0) {
     return (
       <div
@@ -48,7 +48,27 @@ const SavedFlightsTable = ({ flights }) => {
                 {flight.arrivalTime}{" "}({flight.arrivalIata})
               </td>
               <td className="d-flex gap-2 justify-content-around">
-                <Button variant="danger" size="lg">
+                <Button variant="danger" size="lg"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`http://localhost:5030/delete-flight/${flight.id}`, {
+                        method: "DELETE",
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                        },
+                      });
+                
+                      if (response.ok) {
+                        console.log("Flight deleted successfully.");
+                        setFlights(flights.filter((f) => f.id !== flight.id)); // Update state
+                      } else {
+                        console.error("Failed to delete flight.");
+                      }
+                    } catch (error) {
+                      console.error("Error:", error);
+                    }
+                  }}
+                >
                   <IoTrash />
                 </Button>
                 <Button variant="primary" size="lg">
@@ -57,43 +77,6 @@ const SavedFlightsTable = ({ flights }) => {
               </td>
             </tr>
           ))}
-          {/* {flights.map((flight, index) => (
-            <tr key={index}>
-              <td>
-                {flight.airline.name} {flight.flight.number}
-              </td>
-              <td>
-                {flight.flight_date}
-              </td>
-              <td>
-                ${getRandomPrice()}
-              </td>
-              <td>
-                {new Date(flight.departure.scheduled).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}{" "}
-                ({flight.departure.iata})
-              </td>
-              <td>
-                {new Date(flight.arrival.scheduled).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}{" "}
-                ({flight.arrival.iata})
-              </td>
-              <td className="d-flex gap-2 justify-content-around">
-                <Button variant="danger" size="lg">
-                  <IoTrash />
-                </Button>
-                <Button variant="primary" size="lg">
-                  <IoAirplane />
-                </Button>
-              </td>
-            </tr>
-          ))} */}
         </tbody>
       </Table>
     </div>
