@@ -10,8 +10,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.Tasks;
-
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -45,11 +43,10 @@ string dbConnectionString = $"Server={Environment.GetEnvironmentVariable("DB_SER
                             $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")}";
 
 
-builder.Services.AddSingleton<MySqlConnection>(_ => new MySqlConnection(dbConnectionString));
+builder.Services.AddScoped(_ => new MySqlConnection(dbConnectionString));
 builder.Services.AddHttpClient();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
-
 
 var corsPolicyName = "AllowSpecificOrigins";
 
@@ -432,7 +429,8 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         if (!body.TryGetProperty("hotelName", out var hotelNameElement) ||
             !body.TryGetProperty("hotelDistance", out var hotelDistanceElement) ||
             !body.TryGetProperty("hotelStars", out var hotelStarsElement) ||
-            !body.TryGetProperty("hotelPrice", out var hotelPriceElement))
+            !body.TryGetProperty("hotelPrice", out var hotelPriceElement) ||
+            !body.TryGetProperty("hotelCountryCode", out var hotelCountryCodeElement))
         {
             return Results.BadRequest("Invalid hotel data.");
         }
@@ -441,6 +439,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         float hotelDistance = hotelDistanceElement.GetSingle();
         int hotelStars = hotelStarsElement.GetInt32();
         int hotelPrice = hotelPriceElement.GetInt32();
+        string hotelCountryCode = hotelCountryCodeElement.GetString() ?? string.Empty;
 
         var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
         getUserCmd.Parameters.AddWithValue("@Email", userEmail);
@@ -457,7 +456,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         int userId = Convert.ToInt32(userIdResult);
 
         var insertHotelCmd = new MySqlCommand(
-            "INSERT INTO saved_hotels_net (hotel_name, hotel_distance, hotel_rating, user_id, price) VALUES (@Name, @Distance, @Rating, @UserId, @Price)",
+            "INSERT INTO saved_hotels_net (hotel_name, hotel_distance, hotel_rating, user_id, price, country_code) VALUES (@Name, @Distance, @Rating, @UserId, @Price, @CountryCode)",
             dbConnection);
 
         insertHotelCmd.Parameters.AddWithValue("@Name", hotelName);
@@ -465,6 +464,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         insertHotelCmd.Parameters.AddWithValue("@Rating", hotelStars);
         insertHotelCmd.Parameters.AddWithValue("@UserId", userId);
         insertHotelCmd.Parameters.AddWithValue("@Price", hotelPrice);
+        insertHotelCmd.Parameters.AddWithValue("@CountryCode", hotelCountryCode);
 
         await dbConnection.OpenAsync();
         await insertHotelCmd.ExecuteNonQueryAsync();
@@ -540,7 +540,71 @@ app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnec
 });
 
 
-app.MapGet("/saved-hotels", () => "Route under development.");
+app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+{
+    try
+    {
+        var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Results.Unauthorized();
+        }
+
+        var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
+        getUserCmd.Parameters.AddWithValue("@Email", userEmail);
+
+        await dbConnection.OpenAsync();
+        var userIdResult = await getUserCmd.ExecuteScalarAsync();
+        await dbConnection.CloseAsync();
+
+        if (userIdResult == null)
+        {
+            return Results.NotFound("User not found.");
+        }
+
+        int userId = Convert.ToInt32(userIdResult);
+
+        var getHotelsCmd = new MySqlCommand(
+            "SELECT hotel_name, hotel_distance, hotel_rating, price, country_code " +
+            "FROM saved_hotels_net WHERE user_id = @UserId",
+            dbConnection);
+
+        getHotelsCmd.Parameters.AddWithValue("@UserId", userId);
+
+        await dbConnection.OpenAsync();
+        var reader = await getHotelsCmd.ExecuteReaderAsync();
+
+        var savedHotels = new List<object>();
+        while (await reader.ReadAsync())
+        {
+            savedHotels.Add(new
+            {
+                HotelName = reader["hotel_name"].ToString(),
+                HotelDistance = Convert.ToDecimal(reader["hotel_distance"]),
+                HotelRating = Convert.ToInt32(reader["hotel_rating"]),
+                HotelCountryCode = reader["country_code"].ToString(),
+                HotelPrice = Convert.ToInt32(reader["price"])
+            });
+        }
+
+        await dbConnection.CloseAsync();
+
+        return Results.Ok(savedHotels);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred while fetching saved hotels.");
+    }
+});
+
+app.MapDelete("/delete-flight", () => "Route under development.");
+
+app.MapDelete("/delete-hotel", () => "Route under development.");
+
+app.MapPost("/book-flight", () => "Route under development.");
+
+app.MapPost("/book-hotel", () => "Route under development.");
 
 app.MapGet("/", () => "Hello World!");
 

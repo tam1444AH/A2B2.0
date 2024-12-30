@@ -48,7 +48,8 @@ const HotelCard = ({ hotel }) => {
           hotelName: hotel.name,
           hotelDistance: hotel.distance.value,
           hotelStars: hotel.rating,
-          hotelPrice: getRandomPrice()
+          hotelPrice: getRandomPrice(),
+          hotelCountryCode: hotel.address.countryCode
         }),
       });
       

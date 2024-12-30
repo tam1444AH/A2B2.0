@@ -5,16 +5,21 @@ import hotels from "../data/hotels";
 import SavedFlightsTable from "../components/SavedFlightsTable";
 import SavedHotelsTable from "../components/SavedHotelsTable";
 import { IoAirplane, IoBed } from "react-icons/io5";
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 
 const ProfilePage = () => {
   const [greeting, setGreeting] = useState("");
-  const dataF = flights.flights;
+  // const dataF = flights.flights;
   // const dataF = [];
-  const dataH = hotels.hotels;
+  // const dataH = hotels.hotels;
   // const dataH = [];
 
   const [fetchedFlights, setFetchedFlights] = useState([]);
   const [fetchedHotels, setFetchedHotels] = useState([]);
+
+  const [toast, setToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -28,6 +33,15 @@ const ProfilePage = () => {
       setGreeting("Hello,");
     }
   }, []);
+
+  const handleToast = (message) => {
+    setToastMessage(message);
+    setToast(true);
+  };
+  
+  const handleToastClose = () => {
+    setToast(false);
+  };
 
   useEffect(() => {
     const fetchSavedFlights = async () => {
@@ -43,14 +57,39 @@ const ProfilePage = () => {
           setFetchedFlights(data);
           console.log(data);
         } else {
-          console.error("Failed to fetch saved flights");
+          console.error("Failed to fetch saved flights.");
+          handleToast("Failed to fetch saved flights.");
         }
       } catch (error) {
         console.error("Error fetching saved flights:", error);
+        handleToast(error.message);
+      }
+    };
+
+    const fetchSavedHotels = async () => {
+      try {
+        const response = await fetch("http://localhost:5030/saved-hotels", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFetchedHotels(data);
+          console.log(data);
+        } else {
+          console.error("Failed to fetch saved hotels.");
+          handleToast("Failed to fetch saved hotels.");
+        }
+      } catch (error) {
+        console.error("Error fetching saved hotels:", error);
+        handleToast(error.message);
       }
     };
 
     fetchSavedFlights();
+    fetchSavedHotels();
   }, []);
 
   return (
@@ -64,10 +103,27 @@ const ProfilePage = () => {
           </div>
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Hotels <IoBed /></p>
-            <SavedHotelsTable hotels={dataH} />
+            <SavedHotelsTable hotels={fetchedHotels} />
           </div>
         </div>
       </div>
+
+      <ToastContainer position="top-end" className="p-3" aria-live="assertive">
+        <Toast
+          show={toast}
+          onClose={handleToastClose}
+          delay={3000}
+          autohide
+          bg='danger'
+        >
+          <Toast.Header closeButton>
+            <strong className="me-auto text-dark">
+              Error
+            </strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };

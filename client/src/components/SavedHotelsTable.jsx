@@ -4,7 +4,6 @@ import { IoTrash, IoBed } from "react-icons/io5";
 import { FaStar, FaRegStar } from 'react-icons/fa';
 
 const SavedHotelsTable = ({ hotels }) => {
-  const getRandomPrice = () => Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
 
   const renderStars = (rating) => {
     const stars = [];
@@ -48,11 +47,11 @@ const SavedHotelsTable = ({ hotels }) => {
         <tbody>
           {hotels.map((hotel, index) => (
             <tr key={index}>
-              <td>{hotel.name}</td>
-              <td>{hotel.distance.value} MI</td>
-              <td>${getRandomPrice()}</td>
-              <td>{hotel.rating}</td>
-              <td>{hotel.address.countryCode}</td>
+              <td>{hotel.hotelName}</td>
+              <td>{hotel.hotelDistance} MI</td>
+              <td>${hotel.hotelPrice}</td>
+              <td>{renderStars(hotel.hotelRating)}</td>
+              <td>{hotel.hotelCountryCode}</td>
               <td className="d-flex gap-2 justify-content-around">
                 <Button variant="danger" size="lg">
                   <IoTrash />
