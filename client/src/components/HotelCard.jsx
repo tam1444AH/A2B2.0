@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Toast, ToastContainer, Spinner } from 'react-bootstrap';
+import { Card, Button, Toast, ToastContainer, Spinner, Modal, Form } from 'react-bootstrap';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 
 const HotelCard = ({ hotel }) => {
@@ -8,7 +8,14 @@ const HotelCard = ({ hotel }) => {
   const [toast, setToast] = useState(false);
   const [toastType, setToastType] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [nights, setNights] = useState(1);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
+  const [totalCost, setTotalCost] = useState(200);
   const getRandomPrice = () => Math.floor(Math.random() * (1000 - 100 + 1)) + 100;
+
+  const hotelPrice = 200;
 
   const handleToast = (type, message) => {
     setToastType(type);
@@ -18,6 +25,23 @@ const HotelCard = ({ hotel }) => {
 
   const handleToastClose = () => {
     setToast(false);
+  };
+
+  const handleModalClose = () => setShowModal(false);
+  const handleModalShow = () => setShowModal(true);
+
+  const calculateTotalCost = (nights) => {
+    setTotalCost(hotelPrice * nights);
+  };
+
+  const handleBookHotel = () => {
+    if (cardNumber.length !== 16 || !expirationDate.match(/^\d{4}-\d{2}$/)) {
+      handleToast('danger', 'Invalid card details.');
+      return;
+    }
+
+    handleToast('success', `Hotel booked for ${nights} night(s) at $${totalCost}!`);
+    handleModalClose();
   };
   
   const renderStars = (rating) => {
@@ -111,7 +135,7 @@ const HotelCard = ({ hotel }) => {
               'Save Hotel'
             )}
           </Button>
-          <Button variant="danger" size="sm" className="fw-medium">
+          <Button variant="danger" size="sm" className="fw-medium" onClick={handleModalShow}>
             Book Hotel
           </Button>
         </Card.Footer>
@@ -138,6 +162,58 @@ const HotelCard = ({ hotel }) => {
           <Toast.Body className="text-white text-start">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+      <Modal show={showModal} onHide={handleModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Book Hotel: {hotel.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" controlId="nights">
+              <Form.Label>Number of Nights</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                value={nights}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                  setNights(value);
+                  calculateTotalCost(value);
+                }}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="cardNumber">
+              <Form.Label>Card Number</Form.Label>
+              <Form.Control
+                type="text"
+                maxLength="16"
+                placeholder="Enter 16-digit card number"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="expirationDate">
+              <Form.Label>Expiration Date</Form.Label>
+              <Form.Control
+                type="month"
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+              />
+            </Form.Group>
+            <div className="text-center fw-bold fs-5">
+              Total Cost: ${totalCost || hotelPrice * nights}
+            </div>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleModalClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleBookHotel}>
+            Book Now
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

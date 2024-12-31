@@ -1,8 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { Table, Button } from "react-bootstrap";
 import { IoAirplane, IoTrash } from "react-icons/io5";
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 
-const SavedFlightsTable = ({ flights }) => {
+const SavedFlightsTable = ({ flights, setFlights }) => {
+
+  const [toast, setToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleToast = (message) => {
+    setToastMessage(message);
+    setToast(true);
+  };
+  
+  const handleToastClose = () => {
+    setToast(false);
+  };
 
   if (flights.length === 0) {
     return (
@@ -15,6 +29,29 @@ const SavedFlightsTable = ({ flights }) => {
       </div>
     );
   }
+
+  const handleDeleteFlight = async (flightId) => {
+    try {
+      const response = await fetch(`http://localhost:5030/delete-flight/${flightId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("Flight deleted successfully.");
+        setFlights((prevFlights) => prevFlights.filter((flight) => flight.id !== flightId));
+      } else {
+        console.error("Failed to delete flight.");
+        handleToast("Failed to delete flight.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      handleToast(error.message);
+    }
+  };
+
 
   return (
     <div className="table-responsive mb-4 rounded-4 bg-light" style={{ height: "60vh", overflowY: "auto" }}>
@@ -48,26 +85,10 @@ const SavedFlightsTable = ({ flights }) => {
                 {flight.arrivalTime}{" "}({flight.arrivalIata})
               </td>
               <td className="d-flex gap-2 justify-content-around">
-                <Button variant="danger" size="lg"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`http://localhost:5030/delete-flight/${flight.id}`, {
-                        method: "DELETE",
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                        },
-                      });
-                
-                      if (response.ok) {
-                        console.log("Flight deleted successfully.");
-                        setFlights(flights.filter((f) => f.id !== flight.id)); // Update state
-                      } else {
-                        console.error("Failed to delete flight.");
-                      }
-                    } catch (error) {
-                      console.error("Error:", error);
-                    }
-                  }}
+                <Button 
+                  variant="danger" 
+                  size="lg"
+                  onClick={() => handleDeleteFlight(flight.id)}
                 >
                   <IoTrash />
                 </Button>
@@ -79,6 +100,22 @@ const SavedFlightsTable = ({ flights }) => {
           ))}
         </tbody>
       </Table>
+      <ToastContainer position="top-end" className="p-3" aria-live="assertive">
+        <Toast
+          show={toast}
+          onClose={handleToastClose}
+          delay={3000}
+          autohide
+          bg='danger'
+        >
+          <Toast.Header closeButton>
+            <strong className="me-auto text-dark">
+              Error
+            </strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };

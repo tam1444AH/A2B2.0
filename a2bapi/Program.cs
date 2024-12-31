@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -67,6 +69,7 @@ app.UseCors(corsPolicyName);
 app.UseExceptionHandler("/error");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.Map("/error", (HttpContext context) =>
 {
     var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
@@ -112,6 +115,35 @@ app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFac
     }
 
 });
+
+// Console.WriteLine("Testing email-sending functionality...");
+
+// var sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+
+// if (string.IsNullOrEmpty(sendGridApiKey))
+// {
+//     Console.WriteLine("SendGrid API Key is missing. Check your .env file.");
+// }
+// else
+// {
+//     var client = new SendGridClient(sendGridApiKey);
+//     var from = new EmailAddress("thea2bteam2024@gmail.com", "Example User");
+//     var subject = "Test Email from SendGrid";
+//     var to = new EmailAddress("mohammedtalha290@gmail.com", "Recipient Name"); // Replace with a valid email
+//     var plainTextContent = "This is a plain text test email.";
+//     var htmlContent = "<strong>This is an HTML test email.</strong>";
+//     var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+
+//     try
+//     {
+//         var response = await client.SendEmailAsync(msg);
+//         Console.WriteLine($"Email sent successfully. Status Code: {response.StatusCode}");
+//     }
+//     catch (Exception ex)
+//     {
+//         Console.WriteLine($"Failed to send email: {ex.Message}");
+//     }
+// }
 
 app.MapGet("/test-db", async (MySqlConnection dbConnection) =>
 {
@@ -249,7 +281,7 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string d
 });
 
 
-app.MapPost("/signup", async(HttpContext context, MySqlConnection dbConnection) => 
+app.MapPost("/signup", async (HttpContext context, MySqlConnection dbConnection) => 
 {
 
     try 
@@ -687,7 +719,17 @@ app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext conte
 });
 
 
-app.MapPost("/book-flight", () => "Route under development.");
+app.MapPost("/book-flight", [Authorize] async (HttpClient context) =>
+{
+    var body = await context.Request.ReadFromJsonAsync<FlightBookingRequest>();
+
+    if (body == null)
+    {
+        return Results.BadRequest("Invalid booking details.");
+    }
+
+    return Results.Ok(new { message = "Flight successfully booked!" });
+});
 
 app.MapPost("/book-hotel", () => "Route under development.");
 

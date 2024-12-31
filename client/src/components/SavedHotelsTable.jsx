@@ -1,9 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { Table, Button } from "react-bootstrap";
 import { IoTrash, IoBed } from "react-icons/io5";
 import { FaStar, FaRegStar } from 'react-icons/fa';
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 
-const SavedHotelsTable = ({ hotels }) => {
+const SavedHotelsTable = ({ hotels, setHotels }) => {
+
+  const [toast, setToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const handleToast = (message) => {
+    setToastMessage(message);
+    setToast(true);
+  };
+  
+  const handleToastClose = () => {
+    setToast(false);
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -31,6 +45,28 @@ const SavedHotelsTable = ({ hotels }) => {
     );
   }
 
+  const handleDeleteHotel = async (hotelId) => {
+    try {
+      const response = await fetch(`http://localhost:5030/delete-hotel/${hotelId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("Hotel deleted successfully.");
+        setHotels((prevHotels) => prevHotels.filter((hotel) => hotel.id !== hotelId));
+      } else {
+        console.error("Failed to delete hotel.");
+        handleToast("Failed to delete hotel.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      handleToast(error.message);
+    }
+  };
+
   return (
     <div className="table-responsive mb-4 rounded-4 bg-light" style={{ height: "60vh", overflowY: "auto" }}>
       <Table bordered hover className="shadow-sm bg-light">
@@ -53,26 +89,10 @@ const SavedHotelsTable = ({ hotels }) => {
               <td>{renderStars(hotel.hotelRating)}</td>
               <td>{hotel.hotelCountryCode}</td>
               <td className="d-flex gap-2 justify-content-around">
-                <Button variant="danger" size="lg"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`http://localhost:5030/delete-hotel/${hotel.id}`, {
-                        method: "DELETE",
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-                        },
-                      });
-                
-                      if (response.ok) {
-                        console.log("Hotel deleted successfully.");
-                        setHotels(hotels.filter((h) => h.id !== hotel.id)); // Update state
-                      } else {
-                        console.error("Failed to delete hotel.");
-                      }
-                    } catch (error) {
-                      console.error("Error:", error);
-                    }
-                  }}
+                <Button 
+                  variant="danger" 
+                  size="lg"
+                  onClick={() => handleDeleteHotel(hotel.id)}
                 >
                   <IoTrash />
                 </Button>
@@ -84,6 +104,22 @@ const SavedHotelsTable = ({ hotels }) => {
           ))}
         </tbody>
       </Table>
+      <ToastContainer position="top-end" className="p-3" aria-live="assertive">
+        <Toast
+          show={toast}
+          onClose={handleToastClose}
+          delay={3000}
+          autohide
+          bg='danger'
+        >
+          <Toast.Header closeButton>
+            <strong className="me-auto text-dark">
+              Error
+            </strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };

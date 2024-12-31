@@ -99,11 +99,11 @@ const ProfilePage = () => {
         <div className="row g-4">
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Flights <IoAirplane /></p>
-            <SavedFlightsTable flights={fetchedFlights} />
+            <SavedFlightsTable flights={fetchedFlights} setFlights={setFetchedFlights} />
           </div>
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Hotels <IoBed /></p>
-            <SavedHotelsTable hotels={fetchedHotels} />
+            <SavedHotelsTable hotels={fetchedHotels} setHotels={setFetchedHotels} />
           </div>
         </div>
       </div>

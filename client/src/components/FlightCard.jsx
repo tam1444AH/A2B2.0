@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Card, Button, Toast, ToastContainer, Spinner } from 'react-bootstrap';
+import { Card, Button, Toast, ToastContainer, Spinner, Form, InputGroup } from 'react-bootstrap';
 import { IoAirplaneSharp } from 'react-icons/io5';
+import Modal from 'react-bootstrap/Modal';
 
 
 const FlightCard = ({ flight }) => {
@@ -10,7 +11,19 @@ const FlightCard = ({ flight }) => {
   const [toastType, setToastType] = useState('');
   const [toastMessage, setToastMessage] = useState('');
 
+  const [show, setShow] = useState(false);
+  const [numTickets, setNumTickets] = useState(1);
+  const [cardNumber, setCardNumber] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
+  const [totalCost, setTotalCost] = useState(0);
+
   const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => {
+    setTotalCost(150 * numTickets);
+    setShow(true);
+  };
 
   const handleToast = (type, message) => {
     setToastType(type);
@@ -20,6 +33,32 @@ const FlightCard = ({ flight }) => {
 
   const handleToastClose = () => {
     setToast(false);
+  };
+
+  const handleNumTicketsChange = (e) => {
+    const value = Math.max(1, parseInt(e.target.value) || 1);
+    setNumTickets(value);
+    setTotalCost(value * 150);
+  };
+
+  const handleCardNumberChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-numeric characters
+    setCardNumber(value);
+  };
+
+  const handleExpirationDateChange = (e) => {
+    setExpirationDate(e.target.value);
+  };
+
+
+  const handleBookFlight = () => {
+    if (cardNumber.length !== 16 || !expirationDate.match(/^\d{4}-\d{2}$/)) {
+      handleToast('danger', 'Please enter valid card details.');
+      return;
+    }
+
+    handleToast('success', 'Flight successfully booked!');
+    handleClose();
   };
 
   const handleSaveFlight = async () => {
@@ -53,7 +92,7 @@ const FlightCard = ({ flight }) => {
       }
 
     } catch (error) {
-        handleToast('danger', 'An error occurred while saving the flight.');
+        handleToast('danger', 'An error occurred while saving the flight. Make sure you are logged in.');
     } finally {
         setIsSaving(false);
     }
@@ -108,7 +147,13 @@ const FlightCard = ({ flight }) => {
               'Save Flight'
             )}
           </Button>
-          <Button variant="danger" size="sm" className='fw-medium'>Book Flight</Button>
+          <Button variant="danger" 
+            size="sm" 
+            className='fw-medium'
+            onClick={handleShow}
+          >
+              Book Flight
+          </Button>
         </Card.Footer>
       </Card>
 
@@ -132,6 +177,63 @@ const FlightCard = ({ flight }) => {
           <Toast.Body className="text-white text-start">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
+
+      <Modal show={show} onHide={handleClose} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Book Flight: {flight.airline.name} {flight.flight.number}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" controlId="numTickets">
+              <Form.Label>Number of Tickets</Form.Label>
+              <InputGroup>
+                <Form.Control
+                  type="number"
+                  min="1"
+                  value={numTickets}
+                  onChange={handleNumTicketsChange}
+                  required
+                />
+                <InputGroup.Text>Tickets</InputGroup.Text>
+              </InputGroup>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="cardNumber">
+              <Form.Label>Card Number</Form.Label>
+              <Form.Control
+                type="text"
+                maxLength="16"
+                value={cardNumber}
+                onChange={handleCardNumberChange}
+                placeholder="Enter 16-digit card number"
+                required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="expirationDate">
+              <Form.Label>Expiration Date</Form.Label>
+              <Form.Control
+                type="month"
+                value={expirationDate}
+                onChange={handleExpirationDateChange}
+                required
+              />
+            </Form.Group>
+
+            <div className="text-center fw-bold fs-5">
+              Total Cost: ${totalCost}
+            </div>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleBookFlight}>
+            Confirm Booking
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
