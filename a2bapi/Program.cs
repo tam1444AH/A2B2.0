@@ -719,17 +719,17 @@ app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext conte
 });
 
 
-app.MapPost("/book-flight", [Authorize] async (HttpClient context) =>
-{
-    var body = await context.Request.ReadFromJsonAsync<FlightBookingRequest>();
+// app.MapPost("/book-flight", [Authorize] async (HttpClient context) =>
+// {
+//     var body = await context.Request.ReadFromJsonAsync<FlightBookingRequest>();
 
-    if (body == null)
-    {
-        return Results.BadRequest("Invalid booking details.");
-    }
+//     if (body == null)
+//     {
+//         return Results.BadRequest("Invalid booking details.");
+//     }
 
-    return Results.Ok(new { message = "Flight successfully booked!" });
-});
+//     return Results.Ok(new { message = "Flight successfully booked!" });
+// });
 
 app.MapPost("/book-hotel", () => "Route under development.");
 
