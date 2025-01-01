@@ -719,17 +719,89 @@ app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext conte
 });
 
 
-// app.MapPost("/book-flight", [Authorize] async (HttpClient context) =>
-// {
-//     var body = await context.Request.ReadFromJsonAsync<FlightBookingRequest>();
+app.MapPost("/book-flight", [Authorize] async (HttpContext context, HttpClient client, MySqlConnection dbConnection) =>
+{
 
-//     if (body == null)
-//     {
-//         return Results.BadRequest("Invalid booking details.");
-//     }
+    var sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
 
-//     return Results.Ok(new { message = "Flight successfully booked!" });
-// });
+    if (string.IsNullOrEmpty(sendGridApiKey))
+    {
+        return Results.BadRequest("SendGrid API Key is missing.");
+    }
+
+    var flightRequest = await context.Request.ReadFromJsonAsync<FlightBookingRequest>();
+
+    if (flightRequest == null)
+    {
+        return Results.BadRequest("Invalid booking details.");
+    }
+
+    var userEmail = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+    if (string.IsNullOrEmpty(userEmail))
+    {
+        return Results.BadRequest("Unable to retrieve user email.");
+    }
+
+
+    var subject = $"Booking Confirmation for Flight: {flightRequest.FlightName}";
+    var plainTextContent = $@"
+        Dear Customer,
+
+        Thank you for booking your flight with A2B Travel!
+
+        Here are your booking details:
+        Flight: {flightRequest.FlightName}
+        Date: {flightRequest.FlightDate}
+        Departure: {flightRequest.DepartureIata} at {flightRequest.DepartureTime}
+        Arrival: {flightRequest.ArrivalIata} at {flightRequest.ArrivalTime}
+        Tickets: {flightRequest.NumTickets}
+        Total Cost: ${flightRequest.TotalCost}
+
+        Safe travels,
+        The A2B Team
+    ";
+
+    var htmlContent = $@"
+        <strong>Dear Customer,</strong><br/><br/>
+        Thank you for booking your flight with <strong>A2B Travel</strong>!<br/><br/>
+        <strong>Here are your booking details:</strong><br/>
+        <ul>
+            <li>Flight: {flightRequest.FlightName}</li>
+            <li>Date: {flightRequest.FlightDate}</li>
+            <li>Departure: {flightRequest.DepartureIata} at {flightRequest.DepartureTime}</li>
+            <li>Arrival: {flightRequest.ArrivalIata} at {flightRequest.ArrivalTime}</li>
+            <li>Tickets: {flightRequest.NumTickets}</li>
+            <li>Total Cost: <strong>${flightRequest.TotalCost}</strong></li>
+        </ul>
+        <br/>
+        Safe travels,<br/>
+        <strong>The A2B Team</strong>
+    ";
+
+    var from = new EmailAddress("thea2bteam2024@gmail.com", "A2B Travel");
+    var to = new EmailAddress(userEmail);
+    var message = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+
+    try
+    {
+        var sgClient = new SendGridClient(sendGridApiKey);
+        var response = await sgClient.SendEmailAsync(message);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
+        {
+            return Results.Ok(new { message = "Confirmation email sent successfully!" });
+        }
+        else
+        {
+            return Results.Json(new { error = "Failed to send confirmation email." }, statusCode: (int)response.StatusCode);
+        }
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { error = $"Failed to send confirmation email: {ex.Message}" });
+    }
+});
 
 app.MapPost("/book-hotel", () => "Route under development.");
 

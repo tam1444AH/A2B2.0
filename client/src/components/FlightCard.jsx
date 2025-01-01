@@ -51,14 +51,52 @@ const FlightCard = ({ flight }) => {
   };
 
 
-  const handleBookFlight = () => {
+  const handleBookFlight = async () => {
     if (cardNumber.length !== 16 || !expirationDate.match(/^\d{4}-\d{2}$/)) {
       handleToast('danger', 'Please enter valid card details.');
       return;
     }
 
-    handleToast('success', 'Flight successfully booked!');
-    handleClose();
+    const bookingDetails = {
+      FlightName: `${flight.airline.name} ${flight.flight.number}`,
+      FlightDate: flight.flight_date,
+      DepartureIata: flight.departure.iata,
+      ArrivalIata: flight.arrival.iata,
+      DepartureTime: new Date(flight.departure.scheduled).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      ArrivalTime: new Date(flight.arrival.scheduled).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      NumTickets: numTickets,
+      TotalCost: totalCost,
+    };
+
+    try {
+      const response = await fetch("http://localhost:5030/book-flight", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+        body: JSON.stringify(bookingDetails),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        handleToast('success', data.message || 'Flight successfully booked!');
+        handleClose();
+      } else {
+        const error = await response.json();
+        handleToast('danger', error || 'Failed to book flight.');
+      }
+    } catch (error) {
+      handleToast('danger', 'An error occurred while booking the flight. Please try again.');
+    }
   };
 
   const handleSaveFlight = async () => {

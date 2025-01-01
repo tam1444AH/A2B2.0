@@ -180,6 +180,7 @@ const HotelCard = ({ hotel }) => {
                   setNights(value);
                   calculateTotalCost(value);
                 }}
+                required
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="cardNumber">
