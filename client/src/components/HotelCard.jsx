@@ -34,14 +34,46 @@ const HotelCard = ({ hotel }) => {
     setTotalCost(hotelPrice * nights);
   };
 
-  const handleBookHotel = () => {
+  const handleBookHotel = async () => {
     if (cardNumber.length !== 16 || !expirationDate.match(/^\d{4}-\d{2}$/)) {
       handleToast('danger', 'Invalid card details.');
       return;
     }
 
-    handleToast('success', `Hotel booked for ${nights} night(s) at $${totalCost}!`);
-    handleModalClose();
+    if (!nights || nights <= 0) {
+      handleToast('danger', 'Enter the number of nights you wish to stay.');
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5030/book-hotel", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+          body: JSON.stringify({
+              hotelName: hotel.name,
+              hotelDistance: hotel.distance.value,
+              hotelIataCode: hotel.iataCode,
+              hotelCountryCode: hotel.address.countryCode,
+              hotelRating: hotel.rating,
+              numNights: nights,
+              totalCost: totalCost,
+          }),
+      });
+
+      if (response.ok) {
+          const data = await response.json();
+          handleToast("success", data.message || "Hotel successfully booked!");
+          handleModalClose();
+      } else {
+          const error = await response.json();
+          handleToast("danger", error.message || "Failed to book hotel.");
+      }
+    } catch (error) {
+        handleToast("danger", "An error occurred while booking the hotel.");
+    }
   };
   
   const renderStars = (rating) => {
@@ -172,13 +204,20 @@ const HotelCard = ({ hotel }) => {
             <Form.Group className="mb-3" controlId="nights">
               <Form.Label>Number of Nights</Form.Label>
               <Form.Control
+                className="form-control"
                 type="number"
                 min="1"
                 value={nights}
                 onChange={(e) => {
                   const value = parseInt(e.target.value, 10);
-                  setNights(value);
-                  calculateTotalCost(value);
+                  if (!isNaN(value) && value > 0) {
+                    setNights(value);
+                    calculateTotalCost(value);
+                  } else {
+                    
+                    setNights(1);
+                    calculateTotalCost(1);
+                  }
                 }}
                 required
               />
