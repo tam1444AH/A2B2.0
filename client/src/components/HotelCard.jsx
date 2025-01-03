@@ -105,7 +105,8 @@ const HotelCard = ({ hotel }) => {
           hotelDistance: hotel.distance.value,
           hotelStars: hotel.rating,
           hotelPrice: getRandomPrice(),
-          hotelCountryCode: hotel.address.countryCode
+          hotelCountryCode: hotel.address.countryCode,
+          hotelIataCode: hotel.iataCode
         }),
       });
       

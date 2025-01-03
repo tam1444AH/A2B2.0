@@ -462,7 +462,8 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
             !body.TryGetProperty("hotelDistance", out var hotelDistanceElement) ||
             !body.TryGetProperty("hotelStars", out var hotelStarsElement) ||
             !body.TryGetProperty("hotelPrice", out var hotelPriceElement) ||
-            !body.TryGetProperty("hotelCountryCode", out var hotelCountryCodeElement))
+            !body.TryGetProperty("hotelCountryCode", out var hotelCountryCodeElement) ||
+            !body.TryGetProperty("hotelIataCode", out var hotelIataCodeElement))
         {
             return Results.BadRequest("Invalid hotel data.");
         }
@@ -472,6 +473,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         int hotelStars = hotelStarsElement.GetInt32();
         int hotelPrice = hotelPriceElement.GetInt32();
         string hotelCountryCode = hotelCountryCodeElement.GetString() ?? string.Empty;
+        string hotelIataCode = hotelIataCodeElement.GetString() ?? string.Empty;
 
         var getUserCmd = new MySqlCommand("SELECT id FROM users_net WHERE email = @Email", dbConnection);
         getUserCmd.Parameters.AddWithValue("@Email", userEmail);
@@ -488,7 +490,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         int userId = Convert.ToInt32(userIdResult);
 
         var insertHotelCmd = new MySqlCommand(
-            "INSERT INTO saved_hotels_net (hotel_name, hotel_distance, hotel_rating, user_id, price, country_code) VALUES (@Name, @Distance, @Rating, @UserId, @Price, @CountryCode)",
+            "INSERT INTO saved_hotels_net (hotel_name, hotel_distance, hotel_rating, user_id, price, country_code, iata_code) VALUES (@Name, @Distance, @Rating, @UserId, @Price, @CountryCode, @IataCode)",
             dbConnection);
 
         insertHotelCmd.Parameters.AddWithValue("@Name", hotelName);
@@ -497,6 +499,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
         insertHotelCmd.Parameters.AddWithValue("@UserId", userId);
         insertHotelCmd.Parameters.AddWithValue("@Price", hotelPrice);
         insertHotelCmd.Parameters.AddWithValue("@CountryCode", hotelCountryCode);
+        insertHotelCmd.Parameters.AddWithValue("@IataCode", hotelIataCode);
 
         await dbConnection.OpenAsync();
         await insertHotelCmd.ExecuteNonQueryAsync();
@@ -598,7 +601,7 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
         int userId = Convert.ToInt32(userIdResult);
 
         var getHotelsCmd = new MySqlCommand(
-            "SELECT id, hotel_name, hotel_distance, hotel_rating, price, country_code " +
+            "SELECT id, hotel_name, hotel_distance, hotel_rating, price, country_code, iata_code " +
             "FROM saved_hotels_net WHERE user_id = @UserId",
             dbConnection);
 
@@ -617,6 +620,7 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
                 HotelDistance = Convert.ToDecimal(reader["hotel_distance"]),
                 HotelRating = Convert.ToInt32(reader["hotel_rating"]),
                 HotelCountryCode = reader["country_code"].ToString(),
+                HotelIataCode = reader["iata_code"].ToString(),
                 HotelPrice = Convert.ToInt32(reader["price"])
             });
         }

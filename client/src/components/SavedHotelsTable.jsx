@@ -76,7 +76,7 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
             <th>Distance</th>
             <th>Price</th>
             <th>Rating</th>
-            <th>Location</th>
+            <th>IATA</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -87,7 +87,7 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
               <td>{hotel.hotelDistance} MI</td>
               <td>${hotel.hotelPrice}</td>
               <td>{renderStars(hotel.hotelRating)}</td>
-              <td>{hotel.hotelCountryCode}</td>
+              <td>{hotel.hotelIataCode}</td>
               <td className="d-flex gap-2 justify-content-around">
                 <Button 
                   variant="danger" 
