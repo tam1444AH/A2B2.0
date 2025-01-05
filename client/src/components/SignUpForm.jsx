@@ -48,7 +48,7 @@ const SignUpForm = () => {
 
         try {
             const response = await axios.post('http://localhost:5030/signup', formData);
-            console.log(response);
+            
             const { message, token } = response.data;
             localStorage.setItem('authToken', token);
 

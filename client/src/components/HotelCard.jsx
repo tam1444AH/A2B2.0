@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Toast, ToastContainer, Spinner, Modal, Form } from 'react-bootstrap';
+import { Card, Button, Toast, ToastContainer, Spinner, Modal, Form, InputGroup} from 'react-bootstrap';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 
 const HotelCard = ({ hotel }) => {

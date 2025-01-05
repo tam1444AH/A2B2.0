@@ -7,13 +7,11 @@ import SavedHotelsTable from "../components/SavedHotelsTable";
 import { IoAirplane, IoBed } from "react-icons/io5";
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
+import DeleteButton from "../components/DeleteButton";
+
 
 const ProfilePage = () => {
   const [greeting, setGreeting] = useState("");
-  // const dataF = flights.flights;
-  // const dataF = [];
-  // const dataH = hotels.hotels;
-  // const dataH = [];
 
   const [fetchedFlights, setFetchedFlights] = useState([]);
   const [fetchedHotels, setFetchedHotels] = useState([]);
@@ -55,7 +53,6 @@ const ProfilePage = () => {
         if (response.ok) {
           const data = await response.json();
           setFetchedFlights(data);
-          console.log(data);
         } else {
           console.error("Failed to fetch saved flights.");
           handleToast("Failed to fetch saved flights.");
@@ -77,7 +74,6 @@ const ProfilePage = () => {
         if (response.ok) {
           const data = await response.json();
           setFetchedHotels(data);
-          console.log(data);
         } else {
           console.error("Failed to fetch saved hotels.");
           handleToast("Failed to fetch saved hotels.");
@@ -104,6 +100,9 @@ const ProfilePage = () => {
           <div className="col-lg-6">
             <p className="text-center text-white mb-3 fs-4 fw-medium">Saved Hotels <IoBed /></p>
             <SavedHotelsTable hotels={fetchedHotels} setHotels={setFetchedHotels} />
+          </div>
+          <div className="text-center mt-4 d-flex justify-content-center">
+            <DeleteButton />
           </div>
         </div>
       </div>

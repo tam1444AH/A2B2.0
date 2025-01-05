@@ -22,9 +22,8 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
 
   const handleClose = () => setShow(false);
   const handleShow = (flight) => {
-    setTotalCost(150 * numTickets);
-    setSelectedFlight(flight); // Store the selected flight
-    console.log(selectedFlight)
+    setSelectedFlight(flight); 
+    setTotalCost(flight.price * numTickets);
     setShow(true);
   };
 
@@ -41,7 +40,7 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
   const handleNumTicketsChange = (e) => {
     const value = Math.max(1, parseInt(e.target.value) || 1);
     setNumTickets(value);
-    setTotalCost(value * 150);
+    setTotalCost(value * selectedFlight.price);
   };
 
   const handleCardNumberChange = (e) => {
@@ -54,6 +53,11 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
   };
 
   const handleBookFlight = async (flight) => {
+    if (!flight) {
+      handleToast('danger', 'No flight selected for booking.');
+      return;
+    }
+    
     if (cardNumber.length !== 16 || !expirationDate.match(/^\d{4}-\d{2}$/)) {
       handleToast('danger', 'Please enter valid card details.');
       return;
@@ -61,7 +65,7 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
 
     const bookingDetails = {
       FlightName: flight.flightName,
-      FlightDate: flight.flightDate,
+      FlightDate: new Date(flight.flightDate).toLocaleDateString(),
       DepartureIata: flight.departureIata,
       ArrivalIata: flight.arrivalIata,
       DepartureTime: flight.departureTime,
@@ -86,10 +90,12 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
         handleClose();
       } else {
         const error = await response.json();
+        console.error("Error:", error);
         handleToast('danger', error.message || 'Failed to book flight.');
       }
     } catch (error) {
-      handleToast('danger', 'An error occurred while booking the flight. Please try again.');
+      console.error("Error:", error);
+      handleToast('danger', 'An error occurred while booking the flight.');
     }
   };
 
@@ -115,15 +121,15 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
       });
 
       if (response.ok) {
-        console.log("Flight deleted successfully.");
         setFlights((prevFlights) => prevFlights.filter((flight) => flight.id !== flightId));
       } else {
-        console.error("Failed to delete flight.");
-        handleToast("Failed to delete flight.");
+        const error = await response.json();
+        console.error("Error:", error);
+        handleToast('danger',"Failed to delete flight.");
       }
     } catch (error) {
       console.error("Error:", error);
-      handleToast(error.message);
+      handleToast('danger', 'An error occurred while deleting the flight. Please try again.');
     }
   };
 
@@ -198,7 +204,7 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
 
       <Modal show={show} onHide={handleClose} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Book Flight: {selectedFlight.flightName}</Modal.Title>
+          <Modal.Title>Book Flight: {selectedFlight?.flightName || "Loading..."} </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -213,7 +219,7 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
                   required
                 />
                 <InputGroup.Text>Tickets</InputGroup.Text>
-              </InputGroup>
+                </InputGroup>
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="cardNumber">
@@ -247,7 +253,7 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => alert('Under development')}>
+          <Button variant="primary" onClick={() => handleBookFlight(selectedFlight)}>
             Confirm Booking
           </Button>
         </Modal.Footer>

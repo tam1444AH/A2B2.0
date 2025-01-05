@@ -204,6 +204,7 @@ static string GenerateJwt(string email)
     var claims = new[] {
         new Claim(JwtRegisteredClaimNames.Sub, email),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        new Claim(ClaimTypes.Email, email)
     };
 
     var token = new JwtSecurityToken(
@@ -893,6 +894,41 @@ app.MapPost("/book-hotel", [Authorize] async (HttpContext context, HttpClient cl
     catch (Exception ex)
     {
         return Results.Json(new { error = $"Failed to send confirmation email: {ex.Message}" });
+    }
+
+});
+
+app.MapDelete("/delete-account", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+{
+    try 
+    {
+        var email = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        
+        if (string.IsNullOrEmpty(email))
+        {
+            return Results.BadRequest("User email not found in token.");
+        }
+
+        var deleteUserCmd = new MySqlCommand("DELETE FROM users_net WHERE email = @Email", dbConnection);
+        deleteUserCmd.Parameters.AddWithValue("@Email", email);
+
+        await dbConnection.OpenAsync();
+        var rowsAffected = await deleteUserCmd.ExecuteNonQueryAsync();
+        await dbConnection.CloseAsync();
+
+        if (rowsAffected > 0)
+        {
+            return Results.Ok("User account deleted successfully.");
+        }
+        else
+        {
+            return Results.BadRequest("Account not found or failed to delete.");
+        }
+
+    }
+    catch (Exception ex) {
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An error occurred during account deletion.");
     }
 
 });

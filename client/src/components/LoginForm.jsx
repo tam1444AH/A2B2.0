@@ -39,15 +39,14 @@ const LoginForm = () => {
 
         try {
             const response = await axios.post('http://localhost:5030/login', formData);
-            console.log(response);
             const { message, token } = response.data;
             localStorage.setItem('authToken', token);
 
             setToastMessage(message);
             setToastType('success');
             setShowToast(true);
-
             setIsLoggedIn(true);
+            
         } catch (error) {
             console.log(error);
             setToastMessage(
