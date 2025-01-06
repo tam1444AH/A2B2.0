@@ -27,7 +27,7 @@ const Homepage = () => {
 
   const handleSearch = async (from, to) => {
     try {
-      const response = await fetch(`http://localhost:5030/flights/${from}-${to}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/flights/${from}-${to}`);
 
       if (!response.ok) {
         const error = await response.json();

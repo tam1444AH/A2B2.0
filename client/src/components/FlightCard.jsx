@@ -17,6 +17,8 @@ const FlightCard = ({ flight }) => {
   const [expirationDate, setExpirationDate] = useState('');
   const [totalCost, setTotalCost] = useState(0);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const getRandomPrice = () => Math.floor(Math.random() * (500 - 100 + 1)) + 100;
 
   const handleClose = () => setShow(false);
@@ -76,8 +78,10 @@ const FlightCard = ({ flight }) => {
       TotalCost: totalCost,
     };
 
+    setIsSubmitting(true);
+
     try {
-      const response = await fetch("http://localhost:5030/book-flight", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/book-flight`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +99,9 @@ const FlightCard = ({ flight }) => {
         handleToast('danger', error || 'Failed to book flight.');
       }
     } catch (error) {
-      handleToast('danger', 'An error occurred while booking the flight. Please try again.');
+      handleToast('danger', 'An error occurred while booking the flight. Please make sure you are logged in.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -103,7 +109,7 @@ const FlightCard = ({ flight }) => {
     setIsSaving(true);
 
     try {
-      const response = await fetch("http://localhost:5030/save-flight", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/save-flight`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +185,8 @@ const FlightCard = ({ flight }) => {
           >
             {isSaved ? 'Saved' : isSaving ? (
               <>
-                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Saving...
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />{"  "} 
+                Saving
               </>
             ) : (
               'Save Flight'
@@ -267,8 +274,15 @@ const FlightCard = ({ flight }) => {
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleBookFlight}>
-            Confirm Booking
+          <Button variant="primary" onClick={handleBookFlight} className="fw-medium" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                  <Spinner animation="border" size="sm" className="me-2" role="status" />
+                  Confirming
+              </>
+            ) : (
+              'Confirm Booking'
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

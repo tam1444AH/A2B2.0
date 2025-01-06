@@ -86,7 +86,7 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:5030/book-hotel", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/book-hotel`, {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
@@ -142,7 +142,7 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
 
   const handleDeleteHotel = async (hotelId) => {
     try {
-      const response = await fetch(`http://localhost:5030/delete-hotel/${hotelId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/delete-hotel/${hotelId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("authToken")}`,

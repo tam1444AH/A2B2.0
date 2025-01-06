@@ -17,6 +17,8 @@ const HotelCard = ({ hotel }) => {
 
   const hotelPrice = 200;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleToast = (type, message) => {
     setToastType(type);
     setToastMessage(message);
@@ -46,7 +48,7 @@ const HotelCard = ({ hotel }) => {
     }
 
     try {
-      const response = await fetch("http://localhost:5030/book-hotel", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/book-hotel`, {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
@@ -63,6 +65,8 @@ const HotelCard = ({ hotel }) => {
           }),
       });
 
+      setIsSubmitting(true);
+
       if (response.ok) {
           const data = await response.json();
           handleToast("success", data.message || "Hotel successfully booked!");
@@ -73,6 +77,8 @@ const HotelCard = ({ hotel }) => {
       }
     } catch (error) {
         handleToast("danger", "An error occurred while booking the hotel.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -94,7 +100,7 @@ const HotelCard = ({ hotel }) => {
     setIsSaving(true);
 
     try {
-      const response = await fetch("http://localhost:5030/save-hotel", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/save-hotel`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +168,7 @@ const HotelCard = ({ hotel }) => {
           >
             {isSaved ? 'Saved' : isSaving ? (
               <>
-                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> Saving...
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />{" "}Saving
               </>
             ) : (
               'Save Hotel'
@@ -250,8 +256,15 @@ const HotelCard = ({ hotel }) => {
           <Button variant="secondary" onClick={handleModalClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleBookHotel}>
-            Book Now
+          <Button variant="primary" onClick={handleBookHotel} className="fw-medium" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                  <Spinner animation="border" size="sm" className="me-2" role="status" />
+                  Confirming
+              </>
+            ) : (
+              'Book Now'
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

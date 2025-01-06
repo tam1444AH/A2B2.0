@@ -40,7 +40,7 @@ const LoginForm = () => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5030/login', formData);
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/login`, formData);
             const { message, token } = response.data;
             localStorage.setItem('authToken', token);
 

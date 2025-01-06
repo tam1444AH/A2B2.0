@@ -49,7 +49,7 @@ const SignUpForm = () => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5030/signup', formData);
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/signup`, formData);
             
             const { message, token } = response.data;
             localStorage.setItem('authToken', token);

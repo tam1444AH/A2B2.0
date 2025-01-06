@@ -54,7 +54,7 @@ const HotelsForm = ({ setHotels }) => {
 
         try {
 
-            const response = await fetch(`http://localhost:5030/hotels/${to}-${dist}-${stars}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/hotels/${to}-${dist}-${stars}`, {
                 method: 'GET',
                 headers: {     
                     Authorization: `Bearer ${localStorage.getItem("authToken")}`,
