@@ -5,6 +5,7 @@ import { FaStar, FaRegStar } from 'react-icons/fa';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import Modal from 'react-bootstrap/Modal';
+import Spinner from 'react-bootstrap/Spinner';
 
 const SavedHotelsTable = ({ hotels, setHotels }) => {
 
@@ -19,6 +20,8 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
   const [totalCost, setTotalCost] = useState(0);
 
   const [selectedHotel, setSelectedHotel] = useState(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = (hotel) => {
@@ -80,6 +83,8 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
       TotalCost: totalCost,
     }
 
+    setIsSubmitting(true);
+
     try {
       const response = await fetch("http://localhost:5030/book-hotel", {
           method: "POST",
@@ -102,6 +107,8 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
     } catch (error) {
       console.error("Error:", error);
       handleToast("danger", "An error occurred while booking the hotel.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -122,11 +129,13 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
   if (hotels.length === 0) {
     return (
       <div
-        className="d-flex flex-column justify-content-center align-items-center text-muted bg-light rounded-4"
-        style={{ height: "60vh" }}
+        className="d-flex flex-column justify-content-center align-items-center text-muted bg-light rounded-4 text-center"
+        style={{ height: "60vh", padding: "0 1rem", overflow: "hidden", wordBreak: "break-word" }}
       >
         <IoBed className="fs-1 mb-1" />
-        <p className="fs-4 p-2">Save a hotel for it to appear here.</p>
+        <p className="fs-4 p-1">
+          Save a hotel for it to appear here.
+        </p>
       </div>
     );
   }
@@ -262,8 +271,15 @@ const SavedHotelsTable = ({ hotels, setHotels }) => {
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => handleBookHotel(selectedHotel)}>
-            Confirm Booking
+          <Button variant="primary" onClick={() => handleBookHotel(selectedHotel)} className="fw-medium" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" role="status" />
+                Confirming
+              </>
+            ) : (
+              'Confirm Booking'
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -69,7 +69,7 @@ const DeleteButton = () => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             No
           </Button>
-          <Button variant="danger" onClick={handleDeleteAccount}>
+          <Button variant="danger" onClick={handleDeleteAccount} className="fw-medium">
             Yes, Delete
           </Button>
         </Modal.Footer>

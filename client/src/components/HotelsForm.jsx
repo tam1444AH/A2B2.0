@@ -6,6 +6,7 @@ import Container from 'react-bootstrap/Container';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import hotels from '../data/hotels';
+import Spinner from 'react-bootstrap/Spinner';
 
 const HotelsForm = ({ setHotels }) => {
     const [to, setTo] = useState('');
@@ -14,6 +15,7 @@ const HotelsForm = ({ setHotels }) => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('');
     const [showToast, setShowToast] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false); 
 
     const validateInputs = () => {
         const iataRegex = /^[A-Z]{3}$/;
@@ -48,25 +50,33 @@ const HotelsForm = ({ setHotels }) => {
 
         if (!validateInputs()) return;
 
+        setIsSubmitting(true);
+
         try {
 
-            // const response = await fetch(`http://localhost:5030/hotels/${to}-${dist}-${stars}`, {
-            //     method: 'GET',
-            //     headers: { 'Content-Type': 'application/json' },
-            // });
+            const response = await fetch(`http://localhost:5030/hotels/${to}-${dist}-${stars}`, {
+                method: 'GET',
+                headers: {     
+                    Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
             // console.log(response);
 
-            // if (!response.ok) {
-            //     const errorData = await response.json();
-            //     throw new Error(errorData.detail || 'Something went wrong');
-            // }
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Something went wrong');
+            }
 
-            // const data = await response.json();
+            const data = await response.json();
 
-            console.log(hotels);
+            // console.log(hotels);
             
-            setHotels(hotels.hotels);
+            // setHotels(hotels.hotels);
+            setHotels(data);    
+
+            // console.log(data);
 
 
             setToastType('success');
@@ -78,6 +88,8 @@ const HotelsForm = ({ setHotels }) => {
             setToastMessage(err.message);
             setToastType('error');
             setShowToast(true);
+        } finally {
+            setIsSubmitting(false); 
         }
 
     };
@@ -150,8 +162,15 @@ const HotelsForm = ({ setHotels }) => {
                         </Form.Select>
                     </Form.Group>
                     <div className="d-flex justify-content-center">
-                        <Button variant="danger" type="submit" className='fw-medium'>
-                        Submit
+                        <Button variant="danger" type="submit" className="fw-medium" disabled={isSubmitting}>
+                            {isSubmitting ? (
+                                <>
+                                    <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                    Submitting
+                                </>
+                            ) : (
+                                'Submit'
+                            )}
                         </Button>
                     </div>
                 </Form>

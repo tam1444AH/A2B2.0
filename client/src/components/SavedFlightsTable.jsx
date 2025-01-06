@@ -4,6 +4,7 @@ import { IoAirplane, IoTrash } from "react-icons/io5";
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import Modal from 'react-bootstrap/Modal';
+import Spinner from 'react-bootstrap/Spinner';
 
 
 const SavedFlightsTable = ({ flights, setFlights }) => {
@@ -19,6 +20,8 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
   const [totalCost, setTotalCost] = useState(0);
 
   const [selectedFlight, setSelectedFlight] = useState(null);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = (flight) => {
@@ -74,6 +77,8 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
       TotalCost: totalCost,
     }
 
+    setIsSubmitting(true);
+
     try {
       const response = await fetch("http://localhost:5030/book-flight", {
         method: "POST",
@@ -96,17 +101,21 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
     } catch (error) {
       console.error("Error:", error);
       handleToast('danger', 'An error occurred while booking the flight.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (flights.length === 0) {
     return (
       <div
-        className="d-flex flex-column justify-content-center align-items-center text-muted bg-light rounded-4"
-        style={{ height: "60vh" }}
+        className="d-flex flex-column justify-content-center align-items-center text-muted bg-light rounded-4 text-center"
+        style={{ height: "60vh", padding: "0 1rem", overflow: "hidden", wordBreak: "break-word" }}
       >
         <IoAirplane className="fs-1 mb-1" />
-        <p className="fs-4 p-1">Save a flight for it to appear here.</p>
+        <p className="fs-4 p-1">
+          Save a flight for it to appear here.
+        </p>
       </div>
     );
   }
@@ -253,8 +262,15 @@ const SavedFlightsTable = ({ flights, setFlights }) => {
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => handleBookFlight(selectedFlight)}>
-            Confirm Booking
+          <Button variant="primary" onClick={() => handleBookFlight(selectedFlight)} className="fw-medium" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                    <Spinner animation="border" size="sm" className="me-2" role="status" />
+                    Confirming
+                </>
+              ) : (
+                'Confirm Booking'
+              )}
           </Button>
         </Modal.Footer>
       </Modal>

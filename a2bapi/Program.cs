@@ -188,7 +188,7 @@ static async Task<string> GetAccessTokenAsync(IHttpClientFactory httpClientFacto
     }
 
     var jsonResponse = await response.Content.ReadAsStringAsync();
-    Console.WriteLine($"Token Response: {jsonResponse}");
+    // Console.WriteLine($"Token Response: {jsonResponse}");
 
     var tokenResponse = JsonSerializer.Deserialize<AccessTokenResponse>(jsonResponse);
 
@@ -227,9 +227,9 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string d
 
         to = to.ToUpper();
 
-        Console.WriteLine("Starting GetAccessTokenAsync...");
+        // Console.WriteLine("Starting GetAccessTokenAsync...");
         var accessToken = await GetAccessTokenAsync(httpClientFactory);
-        Console.WriteLine($"Retrieved Access Token: {accessToken}");
+        // Console.WriteLine($"Retrieved Access Token: {accessToken}");
 
         var client = httpClientFactory.CreateClient();
         var hotelApiUrl = "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city";
@@ -245,7 +245,7 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string d
 
         var queryString = string.Join("&", queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}"));
         var requestUrl = $"{hotelApiUrl}?{queryString}";
-        Console.WriteLine($"Request URL: {requestUrl}");
+        // Console.WriteLine($"Request URL: {requestUrl}");
 
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
         var response = await client.GetAsync(requestUrl);
@@ -260,7 +260,7 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string d
         }
 
         var jsonString = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"Hotel API Response: {jsonString}");
+        // Console.WriteLine($"Hotel API Response: {jsonString}");
         
         var hotelResponse = JsonSerializer.Deserialize<a2bapi.Models.Hotels.HotelApiResponse>(jsonString);
         

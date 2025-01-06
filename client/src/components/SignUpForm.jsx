@@ -7,6 +7,8 @@ import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthProvider';
+import Spinner from 'react-bootstrap/Spinner';
+
 
 const SignUpForm = () => {
     const { setIsLoggedIn } = useContext(AuthContext);
@@ -96,7 +98,7 @@ const SignUpForm = () => {
                     <Toast.Body className="text-white">{toastMessage}</Toast.Body>
                 </Toast>
             </ToastContainer>
-            <Col xs={12} sm={10} md={8} lg={6} className="p-4 bg-dark rounded mb-4 mx-auto">
+            <Col xs={12} sm={10} md={8} lg={6} className="p-4 bg-dark rounded mb-4 mt-4 mx-auto">
                 <Form onSubmit={handleSubmit}>
                     <Form.Group>
                         <h3 className="text-center mb-4 text-white">Sign Up:</h3>
@@ -135,8 +137,15 @@ const SignUpForm = () => {
                         />
                     </Form.Group>
                     <div className="d-flex justify-content-center">
-                        <Button variant="danger" type="submit" className='fw-medium' disabled={isSubmitting}>
-                            {isSubmitting ? 'Submitting...' : 'Submit'}
+                        <Button variant="danger" type="submit" className="fw-medium d-flex align-items-center justify-content-center" disabled={isSubmitting}>
+                            {isSubmitting ? (
+                                <>
+                                    <Spinner animation="border" size="sm" className="me-2" role="status" />
+                                    Submitting
+                                </>
+                            ) : (
+                                'Submit'
+                            )}
                         </Button>
                     </div>
                 </Form>
