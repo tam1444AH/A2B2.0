@@ -17,6 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 Env.Load();
 
+string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+
 builder.Services.AddAuthentication( x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -26,7 +28,7 @@ builder.Services.AddAuthentication( x => {
     x.TokenValidationParameters = new TokenValidationParameters
     {
         ValidIssuer = "http://localhost:5030",
-        ValidAudience = "http://localhost:5173",
+        ValidAudience = frontendUrl,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey")),
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -56,7 +58,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(corsPolicyName, policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins(frontendUrl)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -200,6 +202,7 @@ static string GenerateJwt(string email)
     var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey";
     var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
     var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+    string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
 
     var claims = new[] {
         new Claim(JwtRegisteredClaimNames.Sub, email),
@@ -209,7 +212,7 @@ static string GenerateJwt(string email)
 
     var token = new JwtSecurityToken(
         issuer: "http://localhost:5030",
-        audience: "http://localhost:5173",
+        audience: frontendUrl,
         claims: claims,
         expires: DateTime.UtcNow.AddHours(1),
         signingCredentials: credentials
