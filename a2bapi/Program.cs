@@ -18,6 +18,7 @@ var config = builder.Configuration;
 Env.Load();
 
 string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+string backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:5030";
 
 builder.Services.AddAuthentication( x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -27,7 +28,7 @@ builder.Services.AddAuthentication( x => {
 {
     x.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = "http://localhost:5030",
+        ValidIssuer = backendUrl,
         ValidAudience = frontendUrl,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey")),
         ValidateIssuer = true,
@@ -203,6 +204,8 @@ static string GenerateJwt(string email)
     var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
     var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
     string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
+    string backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:5030";
+    
 
     var claims = new[] {
         new Claim(JwtRegisteredClaimNames.Sub, email),
@@ -211,7 +214,7 @@ static string GenerateJwt(string email)
     };
 
     var token = new JwtSecurityToken(
-        issuer: "http://localhost:5030",
+        issuer: backendUrl,
         audience: frontendUrl,
         claims: claims,
         expires: DateTime.UtcNow.AddHours(1),
