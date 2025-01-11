@@ -17,8 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 Env.Load();
 
-string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:5173";
-string backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") ?? "http://localhost:5030";
+string frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") 
+    ?? throw new Exception("FRONTEND_URL not set in environment variables.");
+
+string backendUrl = Environment.GetEnvironmentVariable("BACKEND_URL") 
+    ?? throw new Exception("BACKEND_URL not set in environment variables.");
+
+var backendUri = new Uri(backendUrl);
+var backendHost = backendUri.Host;
+var backendPort = backendUri.Port;
 
 builder.Services.AddAuthentication( x => {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -30,7 +37,10 @@ builder.Services.AddAuthentication( x => {
     {
         ValidIssuer = backendUrl,
         ValidAudience = frontendUrl,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET") ?? "YourDevSecretKey")),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+            Environment.GetEnvironmentVariable("JWT_SECRET") 
+            ?? throw new Exception("JWT_SECRET not set in environment variables.")
+        )),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
@@ -68,6 +78,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.Urls.Add($"http://{backendHost}:{backendPort}");
 app.UseCors(corsPolicyName);
 app.UseExceptionHandler("/error");
 app.UseAuthentication();
