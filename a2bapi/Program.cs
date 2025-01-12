@@ -78,19 +78,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.Urls.Add($"http://{backendHost}:{backendPort}");
+// app.Urls.Add($"http://{backendHost}:{backendPort}");
+app.Urls.Add($"http://0.0.0.0:{backendPort}");
 app.UseCors(corsPolicyName);
 app.UseExceptionHandler("/error");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.Map("/error", (HttpContext context) =>
+app.Map("api/error", (HttpContext context) =>
 {
     var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
     return Results.Problem(exception?.Message ?? "An unknown error occured");
 });
 
-app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFactory httpClientFactory) => 
+app.MapGet("api/flights/{from}-{to}", async (string from, string to, IHttpClientFactory httpClientFactory) => 
 {
     var apiKey = Environment.GetEnvironmentVariable("API_ACCESS_KEY");
 
@@ -159,7 +160,7 @@ app.MapGet("/flights/{from}-{to}", async (string from, string to, IHttpClientFac
 //     }
 // }
 
-app.MapGet("/test-db", async (MySqlConnection dbConnection) =>
+app.MapGet("api/test-db", async (MySqlConnection dbConnection) =>
 {
     try
     {
@@ -237,7 +238,7 @@ static string GenerateJwt(string email)
 }
 
 
-app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string dist, string stars, IHttpClientFactory httpClientFactory) =>
+app.MapGet("api/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string dist, string stars, IHttpClientFactory httpClientFactory) =>
 {
     
     try {
@@ -299,7 +300,7 @@ app.MapGet("/hotels/{to}-{dist}-{stars}", [Authorize] async (string to, string d
 });
 
 
-app.MapPost("/signup", async (HttpContext context, MySqlConnection dbConnection) => 
+app.MapPost("api/signup", async (HttpContext context, MySqlConnection dbConnection) => 
 {
 
     try 
@@ -345,7 +346,7 @@ app.MapPost("/signup", async (HttpContext context, MySqlConnection dbConnection)
 
 });
 
-app.MapPost("/login", async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapPost("api/login", async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try 
     {
@@ -392,7 +393,7 @@ static string HashPassword(string password)
     return Convert.ToBase64String(hashedBytes);
 }
 
-app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapPost("api/save-flight", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -465,7 +466,7 @@ app.MapPost("/save-flight", [Authorize] async (HttpContext context, MySqlConnect
 });
 
 
-app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapPost("api/save-hotel", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -532,7 +533,7 @@ app.MapPost("/save-hotel", [Authorize] async (HttpContext context, MySqlConnecti
     }
 });
 
-app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapGet("api/saved-flights", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -594,7 +595,7 @@ app.MapGet("/saved-flights", [Authorize] async (HttpContext context, MySqlConnec
 });
 
 
-app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapGet("api/saved-hotels", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -654,7 +655,7 @@ app.MapGet("/saved-hotels", [Authorize] async (HttpContext context, MySqlConnect
     }
 });
 
-app.MapDelete("/delete-flight/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
+app.MapDelete("api/delete-flight/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -697,7 +698,7 @@ app.MapDelete("/delete-flight/{id}", [Authorize] async (int id, HttpContext cont
     }
 });
 
-app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
+app.MapDelete("api/delete-hotel/{id}", [Authorize] async (int id, HttpContext context, MySqlConnection dbConnection) =>
 {
     try
     {
@@ -741,7 +742,7 @@ app.MapDelete("/delete-hotel/{id}", [Authorize] async (int id, HttpContext conte
 });
 
 
-app.MapPost("/book-flight", [Authorize] async (HttpContext context, HttpClient client, MySqlConnection dbConnection) =>
+app.MapPost("api/book-flight", [Authorize] async (HttpContext context, HttpClient client, MySqlConnection dbConnection) =>
 {
 
     var sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
@@ -825,7 +826,7 @@ app.MapPost("/book-flight", [Authorize] async (HttpContext context, HttpClient c
     }
 });
 
-app.MapPost("/book-hotel", [Authorize] async (HttpContext context, HttpClient client, MySqlConnection dbConnection) => 
+app.MapPost("api/book-hotel", [Authorize] async (HttpContext context, HttpClient client, MySqlConnection dbConnection) => 
 {
     var sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
 
@@ -915,7 +916,7 @@ app.MapPost("/book-hotel", [Authorize] async (HttpContext context, HttpClient cl
 
 });
 
-app.MapDelete("/delete-account", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
+app.MapDelete("api/delete-account", [Authorize] async (HttpContext context, MySqlConnection dbConnection) =>
 {
     try 
     {
@@ -950,6 +951,6 @@ app.MapDelete("/delete-account", [Authorize] async (HttpContext context, MySqlCo
 
 });
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("api/", () => "Hello World!");
 
 app.Run();
